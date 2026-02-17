@@ -1,0 +1,1 @@
+const app=document.getElementById('app');function show(v){if(v==='beneficiaries')app.innerHTML='<h2>Ωφελούμενοι</h2>';if(v==='sessions')app.innerHTML='<h2>Συνεδρίες</h2>';if(v==='tasks')app.innerHTML='<h2>Tasks</h2>';if(v==='history')app.innerHTML='<h2>Ιστορικό</h2>';}show('beneficiaries');
