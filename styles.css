@@ -94,3 +94,27 @@ li {
   padding: 6px 0;
   font-size: 0.9rem;
 }
+/* --- Two-column layout για καρτέλα ωφελούμενου --- */
+.layout{
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+}
+
+.left{
+  width:320px;
+  flex:0 0 320px;
+  position:sticky;
+  top:84px; /* κάτω από το navbar */
+}
+
+.right{
+  flex:1;
+  min-width:0;
+}
+
+/* κινητό: να γυρνάει σε 1 στήλη */
+@media (max-width: 900px){
+  .layout{ flex-direction:column; }
+  .left{ width:auto; flex:auto; position:static; top:auto; }
+}
