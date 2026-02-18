@@ -12,10 +12,18 @@ function render() {
     const b = beneficiaries[selected];
     app.innerHTML = `
       <h2>Καρτέλα Ωφελούμενου</h2>
-      <p><strong>Όνομα:</strong> ${b.name}</p>
-      <p><strong>Σημείωση:</strong></p>
-      <p>${b.note || "-"}</p>
 
+      <section>
+        <h3>Δημογραφικά στοιχεία</h3>
+        <p><strong>Όνομα:</strong> ${b.name}</p>
+        <p><strong>Κωδικός:</strong> ${b.code || "-"}</p>
+        <p><strong>Ηλικία:</strong> ${b.age || "-"}</p>
+        <p><strong>Γενική σημείωση:</strong></p>
+        <p>${b.note || "-"}</p>
+      </section>
+
+      <button onclick="editDemographics()">✏️ Επεξεργασία δημογραφικών</button>
+      <br><br>
       <button onclick="back()">← Πίσω στη λίστα</button>
     `;
     return;
@@ -28,7 +36,7 @@ function render() {
       ${beneficiaries.map(
         (b, i) =>
           `<li onclick="openCard(${i})" style="cursor:pointer">
-            <strong>${b.name}</strong> – ${b.note || ""}
+            <strong>${b.name}</strong>
           </li>`
       ).join("")}
     </ul>
@@ -38,8 +46,20 @@ function render() {
 function add() {
   const name = prompt("Όνομα ωφελούμενου:");
   if (!name) return;
-  const note = prompt("Σημείωση:");
-  beneficiaries.push({ name, note });
+  const code = prompt("Κωδικός (προαιρετικό):");
+  const age = prompt("Ηλικία (προαιρετικό):");
+  const note = prompt("Γενική σημείωση:");
+  beneficiaries.push({ name, code, age, note });
+  save();
+  render();
+}
+
+function editDemographics() {
+  const b = beneficiaries[selected];
+  b.name = prompt("Όνομα:", b.name) || b.name;
+  b.code = prompt("Κωδικός:", b.code || "") || b.code;
+  b.age = prompt("Ηλικία:", b.age || "") || b.age;
+  b.note = prompt("Γενική σημείωση:", b.note || "") || b.note;
   save();
   render();
 }
