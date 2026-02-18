@@ -118,3 +118,21 @@ li {
   .layout{ flex-direction:column; }
   .left{ width:auto; flex:auto; position:static; top:auto; }
 }
+/* --- Full width layout (τερμα αριστερά / δεξιά full) --- */
+main{
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+}
+
+.layout{
+  width: 100%;
+}
+
+.left{
+  margin-left: 0;
+}
+
+.right{
+  width: 100%;
+}
