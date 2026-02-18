@@ -43,7 +43,7 @@ function render() {
 
     const openTasks = b.tasks.filter(t => !t.done).length;
 
-    const limit = 5;
+    const limit = 2;
     const visibleHistory = historyExpanded ? b.history : b.history.slice(0, limit);
 
     app.innerHTML = `
