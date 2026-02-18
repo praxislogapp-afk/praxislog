@@ -69,3 +69,28 @@ li {
   padding: 12px;
   border-bottom: 1px solid #eee;
 }
+/* ---- Minimal UI tweaks ---- */
+
+/* Κουμπιά */
+button {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* Μπλοκ/ενότητες */
+section {
+  margin-top: 16px;
+}
+
+/* Τίτλοι ενοτήτων */
+section h3 {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+/* Λίστες */
+li {
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
