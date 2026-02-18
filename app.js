@@ -20,6 +20,14 @@ function save() {
 function ensureArrays(b) {
   if (!Array.isArray(b.tasks)) b.tasks = [];
   if (!Array.isArray(b.sessions)) b.sessions = [];
+  if (!Array.isArray(b.history)) b.history = [];
+}
+
+function logHistory(b, text) {
+  ensureArrays(b);
+  const d = new Date();
+  const stamp = d.toLocaleString("el-GR");
+  b.history.unshift({ stamp, text });
 }
 
 function render() {
@@ -47,7 +55,22 @@ function render() {
         <h3>Ιστορικό (σύνοψη)</h3>
         <p><strong>Συνεδρίες:</strong> ${b.sessions.length}</p>
         <p><strong>Ανοιχτά tasks:</strong> ${openTasks}</p>
-        <p><strong>Τελευταία ενέργεια:</strong> —</p>
+        <p><strong>Τελευταία ενέργεια:</strong> ${b.history[0] ? b.history[0].stamp : "—"}</p>
+      </section>
+
+      <section style="margin-top:20px">
+        <h3>Ιστορικό (timeline)</h3>
+        ${
+          b.history.length === 0
+            ? `<p>Δεν υπάρχει ιστορικό ακόμα.</p>`
+            : `<ul>
+                ${b.history.map(h=>`
+                  <li>
+                    <strong>${h.stamp}</strong>
+                    <div style="opacity:.85">${h.text}</div>
+                  </li>`).join("")}
+              </ul>`
+        }
       </section>
 
       <section style="margin-top:20px">
@@ -111,16 +134,20 @@ function add() {
   const code = prompt("Κωδικός (προαιρετικό):");
   const age = prompt("Ηλικία (προαιρετικό):");
   const note = prompt("Γενική σημείωση:");
-  beneficiaries.push({ name, code, age, note, tasks: [], sessions: [] });
+  const b = { name, code, age, note, tasks: [], sessions: [], history: [] };
+  logHistory(b, "Δημιουργήθηκε καρτέλα ωφελούμενου.");
+  beneficiaries.push(b);
   save(); render();
 }
 
 function editDemographics() {
   const b = beneficiaries[selected];
+  const oldName = b.name;
   b.name = prompt("Όνομα:", b.name) || b.name;
   b.code = prompt("Κωδικός:", b.code || "") || b.code;
   b.age  = prompt("Ηλικία:", b.age || "") || b.age;
   b.note = prompt("Γενική σημείωση:", b.note || "") || b.note;
+  logHistory(b, `Επεξεργασία δημογραφικών (${oldName} → ${b.name}).`);
   save(); render();
 }
 
@@ -130,19 +157,23 @@ function addTask() {
   if (!title) return;
   const due = prompt("Προθεσμία (προαιρετικό):");
   b.tasks.unshift({ title, due, done:false });
+  logHistory(b, `Νέο task: ${title}${due ? ` (προθεσμία: ${due})` : ""}.`);
   save(); render();
 }
 
 function toggleTask(i) {
   const b = beneficiaries[selected];
   b.tasks[i].done = !b.tasks[i].done;
+  logHistory(b, `${b.tasks[i].done ? "Ολοκληρώθηκε" : "Άνοιξε"} task: ${b.tasks[i].title}.`);
   save(); render();
 }
 
 function deleteTask(i) {
   const b = beneficiaries[selected];
   if (!confirm("Να διαγραφεί το task;")) return;
+  const title = b.tasks[i].title;
   b.tasks.splice(i,1);
+  logHistory(b, `Διαγράφηκε task: ${title}.`);
   save(); render();
 }
 
@@ -150,12 +181,16 @@ function addSession() {
   const b = beneficiaries[selected]; ensureArrays(b);
   const date = prompt("Ημερομηνία (πχ 18/02/2026):");
   if (!date) return;
-  const type = prompt(
-    "Τύπος συνεδρίας:\n" + SESSION_TYPES.map((t,i)=>`${i+1}. ${t}`).join("\n")
+
+  const typeInput = prompt(
+    "Τύπος συνεδρίας:\n" + SESSION_TYPES.map((t,i)=>`${i+1}. ${t}`).join("\n") +
+    "\n\n(Γράψε ακριβώς τον τύπο όπως τον βλέπεις πιο πάνω)"
   );
-  let chosen = SESSION_TYPES.find(t => t === type) || SESSION_TYPES[0];
+  const chosen = SESSION_TYPES.includes(typeInput) ? typeInput : SESSION_TYPES[0];
+
   const note = prompt("Σύντομη σημείωση:");
   b.sessions.unshift({ date, type: chosen, note });
+  logHistory(b, `Νέα συνεδρία: ${date} — ${chosen}${note ? ` • ${note}` : ""}.`);
   save(); render();
 }
 
