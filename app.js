@@ -1,30 +1,38 @@
 const app = document.getElementById('app');
 
-// Φόρτωση από αποθήκευση
 let beneficiaries = JSON.parse(localStorage.getItem("beneficiaries")) || [];
+let selected = null;
 
 function save() {
   localStorage.setItem("beneficiaries", JSON.stringify(beneficiaries));
 }
 
 function render() {
-  if (beneficiaries.length === 0) {
+  if (selected !== null) {
+    const b = beneficiaries[selected];
     app.innerHTML = `
-      <h2>Ωφελούμενοι</h2>
-      <button onclick="add()">+ Νέος Ωφελούμενος</button>
-      <p>Δεν υπάρχουν καταχωρήσεις.</p>
+      <h2>Καρτέλα Ωφελούμενου</h2>
+      <p><strong>Όνομα:</strong> ${b.name}</p>
+      <p><strong>Σημείωση:</strong></p>
+      <p>${b.note || "-"}</p>
+
+      <button onclick="back()">← Πίσω στη λίστα</button>
     `;
-  } else {
-    app.innerHTML = `
-      <h2>Ωφελούμενοι</h2>
-      <button onclick="add()">+ Νέος Ωφελούμενος</button>
-      <ul>
-        ${beneficiaries
-          .map(b => `<li><strong>${b.name}</strong> – ${b.note}</li>`)
-          .join("")}
-      </ul>
-    `;
+    return;
   }
+
+  app.innerHTML = `
+    <h2>Ωφελούμενοι</h2>
+    <button onclick="add()">+ Νέος Ωφελούμενος</button>
+    <ul>
+      ${beneficiaries.map(
+        (b, i) =>
+          `<li onclick="openCard(${i})" style="cursor:pointer">
+            <strong>${b.name}</strong> – ${b.note || ""}
+          </li>`
+      ).join("")}
+    </ul>
+  `;
 }
 
 function add() {
@@ -33,6 +41,16 @@ function add() {
   const note = prompt("Σημείωση:");
   beneficiaries.push({ name, note });
   save();
+  render();
+}
+
+function openCard(index) {
+  selected = index;
+  render();
+}
+
+function back() {
+  selected = null;
   render();
 }
 
