@@ -23,7 +23,15 @@ function render() {
       </section>
 
       <button onclick="editDemographics()">✏️ Επεξεργασία δημογραφικών</button>
-      <br><br>
+
+      <section style="margin-top:20px">
+        <h3>Ιστορικό (σύνοψη)</h3>
+        <p><strong>Συνεδρίες:</strong> 0</p>
+        <p><strong>Ανοιχτά tasks:</strong> 0</p>
+        <p><strong>Τελευταία ενέργεια:</strong> —</p>
+      </section>
+
+      <br>
       <button onclick="back()">← Πίσω στη λίστα</button>
     `;
     return;
