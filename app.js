@@ -1,6 +1,11 @@
 const app = document.getElementById('app');
 
-let beneficiaries = [];
+// Φόρτωση από αποθήκευση
+let beneficiaries = JSON.parse(localStorage.getItem("beneficiaries")) || [];
+
+function save() {
+  localStorage.setItem("beneficiaries", JSON.stringify(beneficiaries));
+}
 
 function render() {
   if (beneficiaries.length === 0) {
@@ -14,7 +19,9 @@ function render() {
       <h2>Ωφελούμενοι</h2>
       <button onclick="add()">+ Νέος Ωφελούμενος</button>
       <ul>
-        ${beneficiaries.map(b => `<li><strong>${b.name}</strong> – ${b.note}</li>`).join("")}
+        ${beneficiaries
+          .map(b => `<li><strong>${b.name}</strong> – ${b.note}</li>`)
+          .join("")}
       </ul>
     `;
   }
@@ -25,6 +32,7 @@ function add() {
   if (!name) return;
   const note = prompt("Σημείωση:");
   beneficiaries.push({ name, note });
+  save();
   render();
 }
 
