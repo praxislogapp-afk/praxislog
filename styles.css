@@ -56,6 +56,7 @@ nav button{
   border: 1px solid rgba(15,23,42,0.10);
   background: rgba(15,23,42,0.04);
   color: rgba(15,23,42,0.86);
+  box-shadow: none;
 }
 nav button:hover{ background: rgba(15,23,42,0.06); }
 
@@ -165,6 +166,7 @@ button, .btn{
   color:#fff;
   background: linear-gradient(180deg, var(--primary), var(--primary2));
   box-shadow: 0 8px 18px rgba(47,107,255,0.14);
+  white-space: nowrap;
 }
 
 button:hover, .btn:hover{ filter: brightness(1.03); }
@@ -186,6 +188,12 @@ button:active, .btn:active{ transform: translateY(0.5px); }
   gap: 10px;
   flex-wrap: wrap;
   align-items:center;
+}
+
+/* ✅ PANEL buttons aligned (same width) */
+.panel .row button{
+  flex: 1;
+  min-width: 0;
 }
 
 /* INPUTS */
@@ -248,6 +256,12 @@ button:active, .btn:active{ transform: translateY(0.5px); }
   background: rgba(255,255,255,0.78);
 }
 
+/* ✅ delete buttons in lists aligned + same width */
+.listItem button{
+  min-width: 92px;
+}
+
+/* checkbox row */
 .check{
   display:flex;
   align-items:center;
@@ -276,11 +290,22 @@ button:active, .btn:active{ transform: translateY(0.5px); }
   color: rgba(15,23,42,0.82);
 }
 
-/* DETAILS */
+/* ✅ sessions action row alignment */
+.cardRow .row{
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+.details{
+  flex: 1;
+}
 .details summary{
   cursor:pointer;
   color: rgba(15,23,42,0.86);
   font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .detailsBody{
