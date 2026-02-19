@@ -64,6 +64,7 @@ nav button{
   cursor: pointer;
   padding: 8px 10px;
   border-radius: 10px;
+  box-shadow: none;
 }
 
 nav button:hover{
@@ -79,13 +80,7 @@ main{
   padding: 18px;
 }
 
-/* “card” feel for screens app renders */
-#app > section,
-#app > div,
-#app{
-  /* safe, no-op if your markup differs */
-}
-
+/* screens */
 section{
   margin-top: 14px;
   padding: 14px;
@@ -114,10 +109,10 @@ button{
   background: linear-gradient(180deg, var(--primary), var(--primary-2));
   color: #fff;
   border: 1px solid rgba(255,255,255,0.08);
-  padding: 9px 12px;
+  padding: 7px 10px;      /* tighter */
   border-radius: 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;        /* tighter */
   box-shadow: 0 8px 18px rgba(91,124,250,0.22);
 }
 
