@@ -1,45 +1,54 @@
-// PraxisLog — Full functional version (Card + Tasks + Sessions + History + Settings)
-// Static SPA (HTML/CSS/JS). Data is in-memory demo; Settings stored in localStorage.
+// PraxisLog — Full functional version + PERSISTENCE + Better History Title
+// Static SPA. Data now saved to localStorage so refresh won't “bring back” deleted items.
 
 const app = document.getElementById("app");
 
 /* =========================
-   Demo data (temporary)
+   Storage (Persistence)
    ========================= */
-let beneficiaries = [
-  { id: "1111", name: "Αλέξανδρος Αλαμάνος", age: 43, note: "ΙΣ", deleted: false, deletedAt: null },
-  { id: "2244", name: "Μ.Κ.", age: 29, note: "Follow-up", deleted: false, deletedAt: null },
-];
+const LS_KEY_DATA = "praxislog_data_v1";
 
-let tasks = [
-  { id: "t1", title: "Δημιουργία αίτησης", due: "25/02", done: false, benId: "1111" },
-  { id: "t2", title: "Τηλέφωνο για ραντεβού", due: "26/02", done: false, benId: "1111" },
-];
+function defaultData() {
+  return {
+    beneficiaries: [
+      { id: "1111", name: "Αλέξανδρος Αλαμάνος", age: 43, note: "ΙΣ", deleted: false, deletedAt: null },
+      { id: "2244", name: "Μ.Κ.", age: 29, note: "Follow-up", deleted: false, deletedAt: null },
+    ],
+    tasks: [
+      { id: "t1", title: "Δημιουργία αίτησης", due: "25/02", done: false, benId: "1111" },
+      { id: "t2", title: "Τηλέφωνο για ραντεβού", due: "26/02", done: false, benId: "1111" },
+    ],
+    sessions: [
+      { id: "s1", date: "23.01.26", type: "Ατομική", note: "Ο ωφελούμενος ήρθε ψυχικά φορτισμένος", benId: "1111" },
+      { id: "s2", date: "18.02.26", type: "Ατομική", note: "Ανασκόπηση στόχων και σχεδιασμός επόμενων βημάτων", benId: "1111" },
+    ],
+    history: [
+      { id: "h1", ts: new Date().toLocaleString("el-GR"), text: "Δημιουργήθηκε νέο task: Δημιουργία αίτησης (1111)" },
+    ],
+  };
+}
 
-let sessions = [
-  { id: "s1", date: "23.01.26", type: "Ατομική", note: "Ο ωφελούμενος ήρθε ψυχικά φορτισμένος", benId: "1111" },
-  { id: "s2", date: "18.02.26", type: "Ατομική", note: "Ανασκόπηση στόχων και σχεδιασμός επόμενων βημάτων", benId: "1111" },
-];
+function loadData() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_DATA);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return defaultData();
+    return {
+      beneficiaries: Array.isArray(parsed.beneficiaries) ? parsed.beneficiaries : defaultData().beneficiaries,
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : defaultData().tasks,
+      sessions: Array.isArray(parsed.sessions) ? parsed.sessions : defaultData().sessions,
+      history: Array.isArray(parsed.history) ? parsed.history : defaultData().history,
+    };
+  } catch {
+    return defaultData();
+  }
+}
 
-let history = [
-  { id: "h1", ts: new Date().toLocaleString("el-GR"), text: "Δημιουργήθηκε νέο task: Δημιουργία αίτησης (1111)" },
-];
-
-/* =========================
-   App state
-   ========================= */
-let view = "beneficiaries"; // beneficiaries | sessions | tasks | history | settings
-let selectedBenId = null;   // persists across tabs
-let benEditMode = false;
-
-let historyCollapsed = true;
-
-// Sessions UI state
-let showNewSessionForm = false;
-let newSessionDraft = { date: "", type: "", note: "" };
-
-let editingSessionId = null;
-let editSessionDraft = { date: "", type: "", note: "" };
+function saveData() {
+  const payload = { beneficiaries, tasks, sessions, history };
+  localStorage.setItem(LS_KEY_DATA, JSON.stringify(payload));
+}
 
 /* =========================
    Settings — Session types
@@ -80,6 +89,7 @@ function nowGR() {
 }
 function pushHistory(text) {
   history.unshift({ id: "h" + Math.random().toString(16).slice(2), ts: nowGR(), text });
+  saveData();
 }
 function getSelectedBen() {
   if (!selectedBenId) return null;
@@ -104,6 +114,31 @@ function normalizeSessionDraftTypes() {
 }
 
 /* =========================
+   Load persisted data
+   ========================= */
+const initial = loadData();
+let beneficiaries = initial.beneficiaries;
+let tasks = initial.tasks;
+let sessions = initial.sessions;
+let history = initial.history;
+
+/* =========================
+   App state
+   ========================= */
+let view = "beneficiaries"; // beneficiaries | sessions | tasks | history | settings
+let selectedBenId = null;   // persists across tabs
+let benEditMode = false;
+
+let historyCollapsed = true;
+
+// Sessions UI state
+let showNewSessionForm = false;
+let newSessionDraft = { date: "", type: "", note: "" };
+
+let editingSessionId = null;
+let editSessionDraft = { date: "", type: "", note: "" };
+
+/* =========================
    Navigation (called by index.html buttons)
    ========================= */
 window.show = function (which) {
@@ -124,7 +159,6 @@ function render() {
   if (view === "history") return renderHistory();
   if (view === "settings") return renderSettings();
 
-  // fallback
   view = "beneficiaries";
   renderBeneficiaries();
 }
@@ -133,7 +167,6 @@ function render() {
    Views
    ========================= */
 function renderBeneficiaries() {
-  // LIST
   if (!selectedBenId) {
     const activeBeneficiaries = beneficiaries.filter((b) => !b.deleted);
 
@@ -163,7 +196,6 @@ function renderBeneficiaries() {
     return;
   }
 
-  // CARD (2 columns)
   const b = getSelectedBen();
   if (!b) {
     selectedBenId = null;
@@ -183,7 +215,6 @@ function renderBeneficiaries() {
   app.innerHTML = `
     <div class="page">
       <div class="split">
-        <!-- LEFT: Beneficiary card -->
         <aside class="panel">
           <h2 class="panel-title">Καρτέλα ωφελούμενου</h2>
 
@@ -225,7 +256,6 @@ function renderBeneficiaries() {
             <button class="btn" onclick="uiBackToList()">← Πίσω στη λίστα</button>
           </div>
 
-          <!-- Danger zone -->
           <div class="card mt">
             <h3>Ενέργειες</h3>
             <div class="muted">Η διαγραφή καταγράφεται στο ιστορικό.</div>
@@ -235,7 +265,6 @@ function renderBeneficiaries() {
           </div>
         </aside>
 
-        <!-- RIGHT: Work area -->
         <section class="panel wide">
           <div class="section">
             <h3>${esc(b.name)}</h3>
@@ -253,7 +282,7 @@ function renderBeneficiaries() {
 
           <div class="section">
             <div class="row between">
-              <h3>Ιστορικό (timeline)</h3>
+              <h3>Ιστορικό (σύνοψη)</h3>
               <button class="btn btn-sm" onclick="uiToggleHistory()">
                 ${historyCollapsed ? "Εμφάνιση όλων" : "Σύμπτυξη"}
               </button>
@@ -406,12 +435,12 @@ function renderTasks() {
 
 function renderHistory() {
   const b = getSelectedBen();
-  const itemsAll = history.slice(0, 80);
+  const itemsAll = history.slice(0, 120);
   const items = b ? itemsAll.filter((h) => h.text.includes(`(${b.id})`)) : itemsAll;
 
   app.innerHTML = `
     <div class="page">
-      <h1>Ιστορικό</h1>
+      <h1>${b ? `Ιστορικό — ${esc(b.name)}` : "Ιστορικό"}</h1>
       <div class="muted">
         ${b ? `<strong>${esc(b.name)}</strong> • ` : ""}
         Πρόσφατες ενέργειες (${items.length}).
@@ -454,13 +483,10 @@ function renderSettings() {
       </div>
 
       <div class="card mt">
-        <h3>Πλοήγηση</h3>
-        <div class="muted">Αν έχεις επιλεγμένο ωφελούμενο, οι καρτέλες φιλτράρονται αυτόματα.</div>
+        <h3>Δεδομένα</h3>
+        <div class="muted">Αν κάτι πάει στραβά, μπορείς να καθαρίσεις όλα τα τοπικά δεδομένα.</div>
         <div class="row mt-sm">
-          <button class="btn btn-sm" onclick="show('beneficiaries')">Ωφελούμενοι</button>
-          <button class="btn btn-sm" onclick="show('sessions')">Συνεδρίες</button>
-          <button class="btn btn-sm" onclick="show('tasks')">Tasks</button>
-          <button class="btn btn-sm" onclick="show('history')">Ιστορικό</button>
+          <button class="btn btn-danger btn-sm" onclick="uiResetAllData()">Reset όλα</button>
         </div>
       </div>
     </div>
@@ -542,7 +568,7 @@ function renderSessionCardBodyHTML(s, forSelectedBen) {
 }
 
 /* =========================
-   UI actions — Beneficiaries
+   UI actions
    ========================= */
 window.uiBackToList = function () {
   selectedBenId = null;
@@ -588,6 +614,7 @@ window.uiSaveBenEdit = function () {
 
   pushHistory(`Επεξεργασία δημογραφικών (${selectedBenId})`);
   benEditMode = false;
+  saveData();
   render();
 };
 
@@ -601,6 +628,7 @@ window.uiAddBeneficiary = function () {
 
   beneficiaries.unshift({ id, name, age, note, deleted: false, deletedAt: null });
   pushHistory(`Προσθήκη ωφελούμενου: ${name} (${id})`);
+  saveData();
   render();
 };
 
@@ -624,12 +652,11 @@ window.uiDeleteBeneficiary = function () {
   benEditMode = false;
   showNewSessionForm = false;
   editingSessionId = null;
+
+  saveData();
   render();
 };
 
-/* =========================
-   UI actions — Tasks
-   ========================= */
 window.uiAddTask = function () {
   if (!selectedBenId) {
     alert("Διάλεξε πρώτα ωφελούμενο.");
@@ -644,6 +671,7 @@ window.uiAddTask = function () {
 
   tasks.unshift({ id, title, due, done: false, benId: selectedBenId });
   pushHistory(`Νέο task: ${title} (${selectedBenId})`);
+  saveData();
   render();
 };
 
@@ -653,6 +681,7 @@ window.uiToggleTask = function (taskId) {
 
   t.done = !t.done;
   pushHistory(`${t.done ? "Ολοκλήρωση" : "Επαναφορά"} task: ${t.title} (${t.benId})`);
+  saveData();
   render();
 };
 
@@ -664,12 +693,10 @@ window.uiDeleteTask = function (taskId) {
 
   tasks = tasks.filter((x) => x.id !== taskId);
   pushHistory(`Διαγραφή task: ${t.title} (${t.benId})`);
+  saveData();
   render();
 };
 
-/* =========================
-   UI actions — Sessions
-   ========================= */
 window.uiStartNewSession = function () {
   if (!selectedBenId) {
     alert("Διάλεξε πρώτα ωφελούμενο.");
@@ -705,6 +732,8 @@ window.uiSaveNewSession = function () {
   pushHistory(`Νέα συνεδρία: ${type} (${selectedBenId})`);
   showNewSessionForm = false;
   newSessionDraft = { date: "", type: SESSION_TYPES[0], note: "" };
+
+  saveData();
   render();
 };
 
@@ -743,6 +772,8 @@ window.uiSaveEditSession = function (sessionId) {
 
   pushHistory(`Επεξεργασία συνεδρίας: ${type} (${s.benId})`);
   editingSessionId = null;
+
+  saveData();
   render();
 };
 
@@ -757,20 +788,16 @@ window.uiDeleteSession = function (sessionId) {
 
   editingSessionId = null;
   showNewSessionForm = false;
+
+  saveData();
   render();
 };
 
-/* =========================
-   UI actions — History
-   ========================= */
 window.uiToggleHistory = function () {
   historyCollapsed = !historyCollapsed;
   render();
 };
 
-/* =========================
-   UI actions — Settings
-   ========================= */
 window.uiSaveSessionTypes = function () {
   const raw = document.getElementById("set_session_types")?.value ?? "";
   const lines = raw.split("\n").map((x) => x.trim()).filter(Boolean);
@@ -783,7 +810,6 @@ window.uiSaveSessionTypes = function () {
   SESSION_TYPES = Array.from(new Set(lines));
   saveSessionTypes(SESSION_TYPES);
 
-  // keep drafts compatible
   newSessionDraft.type = SESSION_TYPES[0];
   editSessionDraft.type = SESSION_TYPES[0];
 
@@ -801,7 +827,25 @@ window.uiResetSessionTypes = function () {
   render();
 };
 
+window.uiResetAllData = function () {
+  if (!confirm("Reset όλων των δεδομένων;")) return;
+  localStorage.removeItem(LS_KEY_DATA);
+  const d = defaultData();
+  beneficiaries = d.beneficiaries;
+  tasks = d.tasks;
+  sessions = d.sessions;
+  history = d.history;
+  selectedBenId = null;
+  benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
+  saveData();
+  alert("Έγινε reset.");
+  render();
+};
+
 /* =========================
    Start
    ========================= */
+saveData(); // ensure baseline exists
 render();
