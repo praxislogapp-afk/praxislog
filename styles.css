@@ -1,23 +1,25 @@
 /* =========================
-   PraxisLog — Dark Focus UI
-   (CHECKPOINT 2 — αισθητικό)
+   PraxisLog — Dark Focus UI (Charcoal)
+   κουμπιά: κρατάμε όπως είναι
    ========================= */
 
 :root{
-  --bg: #0b0f17;
-  --panel: #0f1624;
-  --panel-2: #121b2c;
-  --border: rgba(255,255,255,0.08);
+  /* πιο φωτεινό dark (charcoal) */
+  --bg: #111827;        /* αντί για σχεδόν μαύρο */
+  --panel: #182235;
+  --panel-2: #1b2a44;
+  --border: rgba(255,255,255,0.10);
 
   --text: rgba(255,255,255,0.92);
-  --muted: rgba(255,255,255,0.68);
+  --muted: rgba(255,255,255,0.72);
 
-  --primary: #5b7cfa;
-  --primary-2: #3d5cf0;
+  /* ίδιο μπλε, λίγο πιο “soft” */
+  --primary: #6b8bff;
+  --primary-2: #4f6ef5;
 
-  --danger: #ff5d5d;
+  --danger: #ff6b6b;
 
-  --shadow: 0 10px 30px rgba(0,0,0,0.45);
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
   --radius: 14px;
 }
 
@@ -26,9 +28,10 @@
 body{
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   margin: 0;
-  background: radial-gradient(1200px 700px at 20% 0%, rgba(91,124,250,0.18), transparent 60%),
-              radial-gradient(900px 600px at 90% 10%, rgba(61,92,240,0.14), transparent 55%),
-              var(--bg);
+  background:
+    radial-gradient(1200px 700px at 20% 0%, rgba(107,139,255,0.22), transparent 60%),
+    radial-gradient(900px 600px at 90% 10%, rgba(79,110,245,0.16), transparent 55%),
+    var(--bg);
   color: var(--text);
 }
 
@@ -38,7 +41,7 @@ nav{
   top: 0;
   z-index: 10;
 
-  background: rgba(15,22,36,0.85);
+  background: rgba(24,34,53,0.78);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 
@@ -55,7 +58,7 @@ nav strong{
   color: var(--text);
 }
 
-/* nav buttons look like tabs */
+/* nav buttons like tabs */
 nav button{
   background: transparent;
   border: 1px solid transparent;
@@ -69,8 +72,8 @@ nav button{
 
 nav button:hover{
   color: var(--text);
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.08);
 }
 
 /* ===== Main container ===== */
@@ -104,44 +107,35 @@ section h3{
   font-weight: 600;
 }
 
-/* ===== Buttons (global) ===== */
+/* ===== Buttons (global) — κρατάμε tight ===== */
 button{
   background: linear-gradient(180deg, var(--primary), var(--primary-2));
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.08);
-  padding: 7px 10px;      /* tighter */
+  border: 1px solid rgba(255,255,255,0.10);
+  padding: 7px 10px;
   border-radius: 10px;
   cursor: pointer;
-  font-size: 12px;        /* tighter */
-  box-shadow: 0 8px 18px rgba(91,124,250,0.22);
+  font-size: 12px;
+  box-shadow: 0 8px 18px rgba(107,139,255,0.22);
 }
 
-button:hover{
-  filter: brightness(1.05);
-}
+button:hover{ filter: brightness(1.05); }
+button:active{ transform: translateY(0.5px); }
+button:disabled{ opacity: 0.55; cursor: not-allowed; }
 
-button:active{
-  transform: translateY(0.5px);
-}
-
-button:disabled{
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* focus ring for keyboard users */
+/* focus ring */
 button:focus,
 input:focus,
 select:focus,
 textarea:focus{
   outline: none;
-  box-shadow: 0 0 0 3px rgba(91,124,250,0.28);
+  box-shadow: 0 0 0 3px rgba(107,139,255,0.28);
 }
 
-/* ===== Inputs (if any) ===== */
+/* inputs */
 input, select, textarea{
   width: 100%;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.06);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -150,28 +144,21 @@ input, select, textarea{
 }
 
 input::placeholder, textarea::placeholder{
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.50);
 }
 
-/* ===== Lists ===== */
-ul{
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+/* lists */
+ul{ list-style: none; padding: 0; margin: 0; }
 
 li{
   padding: 10px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   font-size: 13px;
   color: var(--text);
 }
+li:last-child{ border-bottom: none; }
 
-li:last-child{
-  border-bottom: none;
-}
-
-/* ===== Two-column layout (beneficiary card) ===== */
+/* 2 columns */
 .layout{
   display: flex;
   gap: 16px;
@@ -182,7 +169,7 @@ li:last-child{
   width: 340px;
   flex: 0 0 340px;
   position: sticky;
-  top: 72px; /* κάτω από το navbar */
+  top: 72px;
 }
 
 .right{
@@ -190,7 +177,6 @@ li:last-child{
   min-width: 0;
 }
 
-/* mobile: 1 column */
 @media (max-width: 900px){
   main{ margin: 12px auto; padding: 12px; }
   .layout{ flex-direction: column; }
