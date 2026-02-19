@@ -15,8 +15,8 @@ let tasks = [
 ];
 
 let sessions = [
-  { id: "s1", date: "23.01.26", type: "Ατομική συνεδρία", note: "Ο ωφελούμενος ήρθε ψυχικά φορτισμένος", benId: "1111" },
-  { id: "s2", date: "18.02.26", type: "Ατομική συνεδρία", note: "Έγινε ανασκόπηση στόχων και σχεδιασμός επόμενων βημάτων", benId: "1111" },
+  { id: "s1", date: "23.01.26", type: "Ατομική", note: "Ο ωφελούμενος ήρθε ψυχικά φορτισμένος", benId: "1111" },
+  { id: "s2", date: "18.02.26", type: "Ατομική", note: "Έγινε ανασκόπηση στόχων και σχεδιασμός επόμενων βημάτων", benId: "1111" },
 ];
 
 let history = [
@@ -28,6 +28,14 @@ let view = "beneficiaries";           // beneficiaries | sessions | tasks | hist
 let selectedBenId = null;             // persists across tabs
 let benEditMode = false;
 let historyCollapsed = true;
+
+// Sessions UI state
+let showNewSessionForm = false;
+let newSessionDraft = { date: "", type: "Ατομική", note: "" };
+let editingSessionId = null;
+let editSessionDraft = { date: "", type: "Ατομική", note: "" };
+
+const SESSION_TYPES = ["Ατομική", "Ομαδική", "Οικογενειακή", "Τηλεσυνεδρία", "Άλλο"];
 
 // --- Helpers ---
 function esc(s) {
@@ -57,6 +65,8 @@ function ensureSelectedNotDeleted() {
   if (b && b.deleted) {
     selectedBenId = null;
     benEditMode = false;
+    showNewSessionForm = false;
+    editingSessionId = null;
   }
 }
 
@@ -72,8 +82,6 @@ function render() {
 // --- Navbar integration (called from index.html buttons) ---
 window.show = function (which) {
   view = which;
-  // IMPORTANT: δεν μηδενίζουμε το selectedBenId όταν αλλάζεις tab
-  // ώστε αν έχεις επιλεγμένο ωφελούμενο να βλέπεις τα δικά του (π.χ. Συνεδρίες).
   render();
 };
 
@@ -181,14 +189,14 @@ function renderBeneficiaries() {
         <!-- RIGHT -->
         <section class="panel wide">
           <div class="section">
-            <h3>Ιστορικό (σύνοψη)</h3>
+            <h3>${esc(b.name)}</h3>
             <div class="kv"><span>Συνεδρίες</span><strong>${benSessions.length}</strong></div>
             <div class="kv"><span>Ανοιχτά tasks</span><strong>${openTasksCount}</strong></div>
             <div class="kv"><span>Τελευταία ενέργεια</span><strong>${esc(lastAction)}</strong></div>
             <div class="row mt-sm">
-              <button class="btn btn-sm" onclick="show('sessions')">Μετάβαση στις Συνεδρίες</button>
-              <button class="btn btn-sm" onclick="show('tasks')">Μετάβαση στα Tasks</button>
-              <button class="btn btn-sm" onclick="show('history')">Μετάβαση στο Ιστορικό</button>
+              <button class="btn btn-sm" onclick="show('sessions')">Συνεδρίες</button>
+              <button class="btn btn-sm" onclick="show('tasks')">Tasks</button>
+              <button class="btn btn-sm" onclick="show('history')">Ιστορικό</button>
             </div>
           </div>
 
@@ -248,21 +256,17 @@ function renderBeneficiaries() {
           <div class="section">
             <div class="row between">
               <h3>Συνεδρίες</h3>
-              <button class="btn btn-primary" onclick="uiAddSession()">+ Νέα συνεδρία</button>
+              <button class="btn btn-primary" onclick="uiStartNewSession()">+ Νέα συνεδρία</button>
             </div>
+
+            ${renderNewSessionFormHTML()}
 
             ${
               benSessions.length
                 ? `
               <div class="mt-sm">
                 ${benSessions
-                  .map(
-                    (s) => `
-                  <div class="session">
-                    <div class="session-title"><strong>${esc(s.date)}</strong> — ${esc(s.type)}</div>
-                    <div class="muted">${esc(s.note)}</div>
-                  </div>`
-                  )
+                  .map((s) => renderSessionCardHTML(s, true))
                   .join("")}
               </div>`
                 : `<div class="muted mt-sm">Δεν υπάρχουν συνεδρίες ακόμα.</div>`
@@ -275,7 +279,6 @@ function renderBeneficiaries() {
 }
 
 function renderTasks() {
-  // Αν υπάρχει selected ωφελούμενος -> δείχνουμε μόνο τα δικά του
   const b = getSelectedBen();
   const filtered = b ? tasks.filter(t => t.benId === b.id) : tasks.slice();
   const open = filtered.filter((t) => !t.done).length;
@@ -284,7 +287,7 @@ function renderTasks() {
     <div class="page">
       <h1>Tasks</h1>
       <div class="muted">
-        ${b ? `Για: <strong>${esc(b.name)}</strong> (Κωδικός ${esc(b.id)}) • ` : ""}
+        ${b ? `<strong>${esc(b.name)}</strong> • ` : ""}
         Σύνολο: ${filtered.length} • Ανοιχτά: ${open}
       </div>
 
@@ -315,7 +318,6 @@ function renderTasks() {
 }
 
 function renderSessions() {
-  // ΖΗΤΟΥΜΕΝΟ: αν έχεις επιλέξει ωφελούμενο -> βλέπεις ΜΟΝΟ τις δικές του συνεδρίες
   const b = getSelectedBen();
   const filtered = b ? sessions.filter(s => s.benId === b.id) : sessions.slice();
 
@@ -323,12 +325,15 @@ function renderSessions() {
     <div class="page">
       <h1>Συνεδρίες</h1>
       <div class="muted">
-        ${b ? `Για: <strong>${esc(b.name)}</strong> (Κωδικός ${esc(b.id)}) • ` : "Όλες οι συνεδρίες (όλων των ωφελούμενων). "}
+        ${b ? `<strong>${esc(b.name)}</strong> • ` : ""}
         Σύνολο: ${filtered.length}
       </div>
 
       <div class="card mt">
         ${b ? `<div class="row"><button class="btn btn-sm" onclick="uiClearSelected()">Εμφάνιση όλων</button></div>` : ""}
+        ${b ? `<div class="row mt-sm"><button class="btn btn-primary" onclick="uiStartNewSession()">+ Νέα συνεδρία</button></div>` : ""}
+
+        ${b ? renderNewSessionFormHTML() : ""}
 
         ${
           filtered.length
@@ -339,15 +344,12 @@ function renderSessions() {
                   const bb = beneficiaries.find((x) => x.id === s.benId);
                   return `
                     <div class="session">
-                      <div class="session-title"><strong>${esc(s.date)}</strong> — ${esc(s.type)}</div>
-                      ${b ? "" : `<div class="muted">${esc(bb?.name || s.benId)}</div>`}
-                      <div class="mt-xs">${esc(s.note)}</div>
-                      ${b ? "" : `<div class="mt-xs"><button class="btn btn-sm" onclick="uiOpenBeneficiaryFromGlobal('${esc(s.benId)}')">Άνοιγμα καρτέλας</button></div>`}
+                      ${renderSessionCardBodyHTML(s, !!b, bb)}
                     </div>
                   `;
                 })
                 .join("")
-            : `<div class="muted">Δεν υπάρχουν συνεδρίες.</div>`
+            : `<div class="muted mt-sm">Δεν υπάρχουν συνεδρίες.</div>`
         }
       </div>
     </div>
@@ -355,7 +357,6 @@ function renderSessions() {
 }
 
 function renderHistory() {
-  // Αν υπάρχει selected ωφελούμενος -> δείχνουμε μόνο ό,τι αφορά αυτόν
   const b = getSelectedBen();
   const itemsAll = history.slice(0, 50);
   const items = b ? itemsAll.filter(h => h.text.includes(`(${b.id})`)) : itemsAll;
@@ -364,7 +365,7 @@ function renderHistory() {
     <div class="page">
       <h1>Ιστορικό</h1>
       <div class="muted">
-        ${b ? `Για: <strong>${esc(b.name)}</strong> (Κωδικός ${esc(b.id)}) • ` : ""}
+        ${b ? `<strong>${esc(b.name)}</strong> • ` : ""}
         Πρόσφατες ενέργειες (${items.length}).
       </div>
 
@@ -386,22 +387,109 @@ function renderHistory() {
   `;
 }
 
-// --- UI actions ---
+/* ---------- Sessions rendering helpers ---------- */
+function renderNewSessionFormHTML() {
+  const b = getSelectedBen();
+  if (!b || !showNewSessionForm) return "";
+
+  return `
+    <div class="session mt-sm">
+      <div class="session-title"><strong>Νέα συνεδρία</strong></div>
+
+      <label class="lbl">Ημερομηνία</label>
+      <input class="inp" id="ns_date" placeholder="π.χ. 19.02.26" value="${esc(newSessionDraft.date)}" />
+
+      <label class="lbl">Τύπος</label>
+      <select class="inp" id="ns_type">
+        ${SESSION_TYPES.map(t => `<option value="${esc(t)}" ${t === newSessionDraft.type ? "selected" : ""}>${esc(t)}</option>`).join("")}
+      </select>
+
+      <label class="lbl">Καταγραφή συνεδρίας</label>
+      <textarea class="inp" id="ns_note" rows="8" placeholder="Γράψε εδώ τη σημείωση...">${esc(newSessionDraft.note)}</textarea>
+
+      <div class="row mt-sm">
+        <button class="btn btn-primary" onclick="uiSaveNewSession()">Αποθήκευση</button>
+        <button class="btn" onclick="uiCancelNewSession()">Ακύρωση</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderSessionCardHTML(s, forSelectedBen) {
+  return `
+    <div class="session">
+      ${renderSessionCardBodyHTML(s, forSelectedBen, null)}
+    </div>
+  `;
+}
+
+function renderSessionCardBodyHTML(s, forSelectedBen, bb) {
+  const isEditing = editingSessionId === s.id;
+
+  if (isEditing) {
+    return `
+      <div class="session-title"><strong>Επεξεργασία συνεδρίας</strong></div>
+
+      <label class="lbl">Ημερομηνία</label>
+      <input class="inp" id="es_date" value="${esc(editSessionDraft.date)}" />
+
+      <label class="lbl">Τύπος</label>
+      <select class="inp" id="es_type">
+        ${SESSION_TYPES.map(t => `<option value="${esc(t)}" ${t === editSessionDraft.type ? "selected" : ""}>${esc(t)}</option>`).join("")}
+      </select>
+
+      <label class="lbl">Καταγραφή συνεδρίας</label>
+      <textarea class="inp" id="es_note" rows="8">${esc(editSessionDraft.note)}</textarea>
+
+      <div class="row mt-sm">
+        <button class="btn btn-primary" onclick="uiSaveEditSession('${esc(s.id)}')">Αποθήκευση</button>
+        <button class="btn" onclick="uiCancelEditSession()">Ακύρωση</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="session-title">
+      <strong>${esc(s.date || "—")}</strong> — ${esc(s.type || "—")}
+    </div>
+    ${forSelectedBen ? "" : `<div class="muted">${esc(bb?.name || s.benId)}</div>`}
+    <div class="mt-xs">${esc(s.note || "")}</div>
+
+    ${forSelectedBen ? `
+      <div class="row mt-sm">
+        <button class="btn btn-sm" onclick="uiStartEditSession('${esc(s.id)}')">Επεξεργασία</button>
+        <button class="btn btn-danger btn-sm" onclick="uiDeleteSession('${esc(s.id)}')">Διαγραφή</button>
+      </div>
+    ` : `
+      <div class="row mt-sm">
+        <button class="btn btn-sm" onclick="uiOpenBeneficiaryFromGlobal('${esc(s.benId)}')">Άνοιγμα καρτέλας</button>
+      </div>
+    `}
+  `;
+}
+
+/* ---------- UI actions ---------- */
 window.uiBackToList = function () {
   selectedBenId = null;
   benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
   render();
 };
 
 window.uiClearSelected = function () {
   selectedBenId = null;
   benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
   render();
 };
 
 window.uiOpenBeneficiary = function (id) {
   selectedBenId = id;
   benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
   view = "beneficiaries";
   render();
 };
@@ -410,6 +498,8 @@ window.uiOpenBeneficiaryFromGlobal = function (benId) {
   view = "beneficiaries";
   selectedBenId = benId;
   benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
   render();
 };
 
@@ -452,7 +542,6 @@ window.uiDeleteBeneficiary = function () {
   const b = getSelectedBen();
   if (!b) return;
 
-  // προστασία: 2 βήματα
   if (!confirm(`Να διαγραφεί ο ωφελούμενος "${b.name}" (Κωδικός ${b.id});`)) return;
 
   const typed = prompt(`Γράψε τον κωδικό (${b.id}) για επιβεβαίωση:`);
@@ -461,14 +550,14 @@ window.uiDeleteBeneficiary = function () {
     return;
   }
 
-  // soft delete (κρατάμε ιστορικό/log)
   b.deleted = true;
   b.deletedAt = nowGR();
   pushHistory(`Διαγραφή ωφελούμενου: ${b.name} (${b.id})`);
 
-  // επιστροφή στη λίστα
   selectedBenId = null;
   benEditMode = false;
+  showNewSessionForm = false;
+  editingSessionId = null;
   render();
 };
 
@@ -509,20 +598,94 @@ window.uiDeleteTask = function (taskId) {
   render();
 };
 
-window.uiAddSession = function () {
+/* ---------- Sessions actions (NEW UX) ---------- */
+window.uiStartNewSession = function () {
   if (!selectedBenId) {
     alert("Διάλεξε πρώτα ωφελούμενο.");
     return;
   }
+  showNewSessionForm = true;
+  editingSessionId = null;
+  newSessionDraft = { date: "", type: "Ατομική", note: "" };
+  render();
+};
 
-  const date = prompt("Ημερομηνία (π.χ. 23.01.26):") || "—";
-  const type = prompt("Τύπος (π.χ. Ατομική συνεδρία):") || "—";
-  const note = prompt("Σύντομη σημείωση:") || "";
+window.uiCancelNewSession = function () {
+  showNewSessionForm = false;
+  newSessionDraft = { date: "", type: "Ατομική", note: "" };
+  render();
+};
+
+window.uiSaveNewSession = function () {
+  if (!selectedBenId) return;
+
+  const date = document.getElementById("ns_date")?.value?.trim() || "—";
+  const type = document.getElementById("ns_type")?.value?.trim() || "—";
+  const note = document.getElementById("ns_note")?.value?.trim() || "";
+
+  if (!note) {
+    alert("Γράψε μια σημείωση (καταγραφή) για τη συνεδρία.");
+    return;
+  }
 
   const id = "s" + Math.random().toString(16).slice(2);
   sessions.push({ id, date, type, note, benId: selectedBenId });
 
   pushHistory(`Νέα συνεδρία: ${type} (${selectedBenId})`);
+  showNewSessionForm = false;
+  newSessionDraft = { date: "", type: "Ατομική", note: "" };
+  render();
+};
+
+window.uiStartEditSession = function (sessionId) {
+  const s = sessions.find(x => x.id === sessionId);
+  if (!s) return;
+  editingSessionId = sessionId;
+  showNewSessionForm = false;
+  editSessionDraft = { date: s.date || "", type: s.type || "Ατομική", note: s.note || "" };
+  render();
+};
+
+window.uiCancelEditSession = function () {
+  editingSessionId = null;
+  editSessionDraft = { date: "", type: "Ατομική", note: "" };
+  render();
+};
+
+window.uiSaveEditSession = function (sessionId) {
+  const s = sessions.find(x => x.id === sessionId);
+  if (!s) return;
+
+  const date = document.getElementById("es_date")?.value?.trim() || "—";
+  const type = document.getElementById("es_type")?.value?.trim() || "—";
+  const note = document.getElementById("es_note")?.value?.trim() || "";
+
+  if (!note) {
+    alert("Η καταγραφή δεν μπορεί να είναι κενή.");
+    return;
+  }
+
+  s.date = date;
+  s.type = type;
+  s.note = note;
+
+  pushHistory(`Επεξεργασία συνεδρίας: ${type} (${s.benId})`);
+  editingSessionId = null;
+  editSessionDraft = { date: "", type: "Ατομική", note: "" };
+  render();
+};
+
+window.uiDeleteSession = function (sessionId) {
+  const s = sessions.find(x => x.id === sessionId);
+  if (!s) return;
+
+  if (!confirm("Να διαγραφεί η συνεδρία;")) return;
+
+  sessions = sessions.filter(x => x.id !== sessionId);
+  pushHistory(`Διαγραφή συνεδρίας: ${s.type} (${s.benId})`);
+
+  editingSessionId = null;
+  showNewSessionForm = false;
   render();
 };
 
