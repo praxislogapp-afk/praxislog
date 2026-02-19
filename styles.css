@@ -1,32 +1,46 @@
-/* === Demographics: make kv rows horizontal (wrap) === */
-.panel .kv{
+/* ===== GLOBAL ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===== PANEL ===== */
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ===== KEY / VALUE (ΔΗΜΟΓΡΑΦΙΚΑ ΟΡΙΖΟΝΤΙΑ) ===== */
+.panel .kv {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-
-  grid-template-columns: unset;
-  padding: 0;
-  border-bottom: 0;
-
-  margin: 0 18px 10px 0;
+  margin-right: 18px;
 }
 
-.panel .kv span{
-  margin: 0;
+.panel .kv span {
+  opacity: 0.7;
 }
 
-.panel .kv strong{
-  margin: 0;
+.panel .kv strong {
+  font-weight: 600;
 }
-/* === Demographics: wrap nicely on small screens === */
-@media (max-width: 768px){
-  .panel{
-    display: flex;
-    flex-wrap: wrap;
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .panel {
+    gap: 12px;
   }
 
-  .panel .kv{
+  .panel .kv {
     margin-right: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 }
