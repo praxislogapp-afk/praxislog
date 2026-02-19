@@ -1,10 +1,14 @@
 // PraxisLog — Clean Beneficiary Card
-// Left: Demographics only
-// Right: Tasks + Sessions only
-// No summary, no counters, no history
+// Left: Demographics only (DOB instead of age) + Edit/Delete next to each other
+// Right: Tasks + Sessions + History at the END
+// Data persists in localStorage
 
 const app = document.getElementById("app");
-const LS_KEY = "praxislog_data_clean";
+
+// NEW storage key (keeps your new structure clean)
+const LS_KEY = "praxislog_data_clean_v2";
+// old key (for migration)
+const LS_OLD = "praxislog_data_clean";
 
 function today() {
   return new Date().toLocaleDateString("el-GR");
@@ -31,21 +35,42 @@ function defaultData() {
       { id: "s1", date: "23.01.26", type: "Ατομική", note: "Ο ωφελούμενος ήρθε ψυχικά φορτισμένος", benId: "1111" },
       { id: "s2", date: "18.02.26", type: "Ατομική", note: "Ανασκόπηση στόχων", benId: "1111" },
     ],
+    // History items per beneficiary
+    history: [
+      { id: "h1", benId: "1111", date: today(), title: "Έναρξη φακέλου", details: "" },
+    ],
   };
 }
 
 function load() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : defaultData();
+    const rawNew = localStorage.getItem(LS_KEY);
+    if (rawNew) return JSON.parse(rawNew);
+
+    // migrate from old key if exists
+    const rawOld = localStorage.getItem(LS_OLD);
+    if (rawOld) {
+      const old = JSON.parse(rawOld);
+      const migrated = {
+        beneficiaries: Array.isArray(old.beneficiaries) ? old.beneficiaries : defaultData().beneficiaries,
+        tasks: Array.isArray(old.tasks) ? old.tasks : defaultData().tasks,
+        sessions: Array.isArray(old.sessions) ? old.sessions : defaultData().sessions,
+        history: defaultData().history, // start with 1 clean history item
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(migrated));
+      return migrated;
+    }
+
+    return defaultData();
   } catch {
     return defaultData();
   }
 }
 
-let { beneficiaries, tasks, sessions } = load();
+let { beneficiaries, tasks, sessions, history } = load();
+
 function save() {
-  localStorage.setItem(LS_KEY, JSON.stringify({ beneficiaries, tasks, sessions }));
+  localStorage.setItem(LS_KEY, JSON.stringify({ beneficiaries, tasks, sessions, history }));
 }
 
 let selectedBenId = null;
@@ -90,6 +115,7 @@ function renderCard() {
 
   const benTasks = tasks.filter(t => t.benId === b.id);
   const benSessions = sessions.filter(s => s.benId === b.id);
+  const benHistory = history.filter(h => h.benId === b.id);
 
   app.innerHTML = `
     <div class="page">
@@ -103,8 +129,8 @@ function renderCard() {
             !editMode ? `
               <div><strong>Όνομα:</strong> ${esc(b.name)}</div>
               <div><strong>Κωδικός:</strong> ${esc(b.id)}</div>
-              <div><strong>Ημ. Γέννησης:</strong> ${esc(b.dob)}</div>
-              <div><strong>Σημείωση:</strong> ${esc(b.note)}</div>
+              <div><strong>Ημ. Γέννησης:</strong> ${esc(b.dob || "")}</div>
+              <div><strong>Σημείωση:</strong> ${esc(b.note || "")}</div>
 
               <div class="row mt">
                 <button class="btn btn-primary" onclick="editMode=true;render()">Επεξεργασία</button>
@@ -113,10 +139,12 @@ function renderCard() {
             ` : `
               <label>Όνομα</label>
               <input id="bn" value="${esc(b.name)}"/>
+
               <label>Ημ. Γέννησης</label>
-              <input id="bd" value="${esc(b.dob)}"/>
+              <input id="bd" value="${esc(b.dob || "")}" placeholder="π.χ. 11/11/1982"/>
+
               <label>Σημείωση</label>
-              <textarea id="bt">${esc(b.note)}</textarea>
+              <textarea id="bt" rows="4">${esc(b.note || "")}</textarea>
 
               <div class="row mt">
                 <button class="btn btn-primary" onclick="saveBen()">Αποθήκευση</button>
@@ -153,6 +181,25 @@ function renderCard() {
             </div>
           `).join("")}
 
+          <!-- HISTORY AT THE END -->
+          <h2 class="mt">Ιστορικό</h2>
+          <button class="btn btn-primary" onclick="addHistory()">+ Νέο γεγονός</button>
+
+          ${
+            benHistory.length ? `
+              ${benHistory.map(h => `
+                <div class="card mt-sm">
+                  <div class="muted">${esc(h.date)}</div>
+                  <strong>${esc(h.title)}</strong>
+                  ${h.details ? `<div class="mt-xs">${esc(h.details)}</div>` : ``}
+                  <button class="btn btn-danger btn-sm mt-sm" onclick="deleteHistory('${h.id}')">Διαγραφή</button>
+                </div>
+              `).join("")}
+            ` : `
+              <div class="muted mt-sm">Δεν υπάρχει ιστορικό ακόμα.</div>
+            `
+          }
+
         </section>
       </div>
     </div>
@@ -162,9 +209,9 @@ function renderCard() {
 /* ================= ACTIONS ================= */
 window.saveBen = function() {
   const b = beneficiaries.find(x => x.id === selectedBenId);
-  b.name = document.getElementById("bn").value;
-  b.dob = document.getElementById("bd").value;
-  b.note = document.getElementById("bt").value;
+  b.name = document.getElementById("bn").value.trim();
+  b.dob = document.getElementById("bd").value.trim();
+  b.note = document.getElementById("bt").value.trim();
   editMode = false;
   save();
   render();
@@ -173,6 +220,11 @@ window.saveBen = function() {
 window.deleteBen = function() {
   if (!confirm("Διαγραφή ωφελούμενου;")) return;
   beneficiaries = beneficiaries.filter(b => b.id !== selectedBenId);
+  // also remove linked data
+  tasks = tasks.filter(t => t.benId !== selectedBenId);
+  sessions = sessions.filter(s => s.benId !== selectedBenId);
+  history = history.filter(h => h.benId !== selectedBenId);
+
   selectedBenId = null;
   save();
   render();
@@ -181,12 +233,14 @@ window.deleteBen = function() {
 window.addTask = function() {
   const title = prompt("Τίτλος task");
   if (!title) return;
-  tasks.push({ id: Math.random()+"", title, due: today(), done:false, benId:selectedBenId });
+  const due = prompt("Προθεσμία (π.χ. 25/02)") || today();
+  tasks.push({ id: "t" + Math.random().toString(16).slice(2), title, due, done:false, benId:selectedBenId });
   save(); render();
 };
 
 window.toggleTask = function(id) {
   const t = tasks.find(x=>x.id===id);
+  if (!t) return;
   t.done = !t.done;
   save(); render();
 };
@@ -197,14 +251,39 @@ window.deleteTask = function(id) {
 };
 
 window.addSession = function() {
+  const type = prompt("Τύπος (π.χ. Ατομική)") || "Ατομική";
+  const date = prompt("Ημερομηνία (π.χ. 19.02.26)") || today();
   const note = prompt("Καταγραφή συνεδρίας");
   if (!note) return;
-  sessions.push({ id: Math.random()+"", date: today(), type:"Ατομική", note, benId:selectedBenId });
+
+  sessions.push({ id: "s" + Math.random().toString(16).slice(2), date, type, note, benId:selectedBenId });
   save(); render();
 };
 
 window.deleteSession = function(id) {
   sessions = sessions.filter(x=>x.id!==id);
+  save(); render();
+};
+
+window.addHistory = function() {
+  const date = prompt("Ημερομηνία", today()) || today();
+  const title = prompt("Τίτλος γεγονότος (π.χ. Κατάθεση αίτησης)");
+  if (!title) return;
+  const details = prompt("Λεπτομέρειες (προαιρετικό)") || "";
+
+  history.unshift({
+    id: "h" + Math.random().toString(16).slice(2),
+    benId: selectedBenId,
+    date,
+    title,
+    details
+  });
+
+  save(); render();
+};
+
+window.deleteHistory = function(id) {
+  history = history.filter(x => x.id !== id);
   save(); render();
 };
 
