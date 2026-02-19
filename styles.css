@@ -18,3 +18,15 @@
 .panel .kv strong{
   margin: 0;
 }
+/* === Demographics: wrap nicely on small screens === */
+@media (max-width: 768px){
+  .panel{
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .panel .kv{
+    margin-right: 12px;
+    margin-bottom: 8px;
+  }
+}
