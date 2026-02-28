@@ -32,7 +32,7 @@ export default function App() {
   }
 
   function addClient() {
-    const c = prompt("Όνομα ωφελούμενου");
+    const c = prompt("Ονοματεπώνυμο ωφελούμενου");
     if (!c) return;
     const next = { ...data, clients: [...data.clients, c] };
     setData(next);
@@ -54,7 +54,9 @@ export default function App() {
             onKeyDown={(e) => (e.key === "Enter" ? login() : null)}
           />
 
-          <button style={s.btn} onClick={login}>Login</button>
+          <button style={s.btn} onClick={login}>
+            Login
+          </button>
         </div>
       </div>
     );
@@ -66,8 +68,12 @@ export default function App() {
         <div style={s.title}>PraxisLog</div>
 
         <div style={s.row}>
-          <div>Χρήστης: <b>{user}</b></div>
-          <button style={s.btn2} onClick={logout}>Logout</button>
+          <div>
+            Χρήστης: <b>{user}</b>
+          </div>
+          <button style={s.btn2} onClick={logout}>
+            Logout
+          </button>
         </div>
 
         <div style={s.sep}>
@@ -77,7 +83,9 @@ export default function App() {
               <li key={i}>{c}</li>
             ))}
           </ul>
-          <button style={s.btn} onClick={addClient}>+ Προσθήκη</button>
+          <button style={s.btn} onClick={addClient}>
+            + Προσθήκη
+          </button>
         </div>
       </div>
     </div>
@@ -128,6 +136,11 @@ const s = {
     cursor: "pointer",
     fontSize: 14,
   },
-  row: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  row: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 6,
+  },
   sep: { marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" },
 };
