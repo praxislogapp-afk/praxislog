@@ -32,9 +32,22 @@ export default function App() {
   }
 
   function addClient() {
-    const c = prompt("Ονοματεπώνυμο ωφελούμενου");
-    if (!c) return;
-    const next = { ...data, clients: [...data.clients, c] };
+    const fullname = prompt("Ονοματεπώνυμο ωφελούμενου");
+    if (!fullname) return;
+
+    const notes = prompt("Παρατηρήσεις (προαιρετικά)") || "";
+
+    const client = {
+      id: Date.now(),
+      fullname,
+      notes,
+    };
+
+    const next = {
+      ...data,
+      clients: [...data.clients, client],
+    };
+
     setData(next);
     saveData(user, next);
   }
@@ -79,8 +92,11 @@ export default function App() {
         <div style={s.sep}>
           <b>Ωφελούμενοι</b>
           <ul>
-            {data.clients.map((c, i) => (
-              <li key={i}>{c}</li>
+            {data.clients.map((c) => (
+              <li key={c.id}>
+                <b>{c.fullname}</b>
+                {c.notes && <div style={{ opacity: 0.7 }}>{c.notes}</div>}
+              </li>
             ))}
           </ul>
           <button style={s.btn} onClick={addClient}>
