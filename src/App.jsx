@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
+import { loadData, saveData } from "./storage";
 
 const USER_KEY = "praxislog_user";
 
 export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
+  const [data, setData] = useState({ clients: [], sessions: [] });
 
   useEffect(() => {
     const u = localStorage.getItem(USER_KEY);
-    if (u) setUser(u);
+    if (u) {
+      setUser(u);
+      setData(loadData(u));
+    }
   }, []);
 
   function login() {
@@ -16,12 +21,22 @@ export default function App() {
     if (!v) return;
     localStorage.setItem(USER_KEY, v);
     setUser(v);
+    setData(loadData(v));
     setName("");
   }
 
   function logout() {
     localStorage.removeItem(USER_KEY);
     setUser("");
+    setData({ clients: [], sessions: [] });
+  }
+
+  function addClient() {
+    const c = prompt("Όνομα ωφελούμενου");
+    if (!c) return;
+    const next = { ...data, clients: [...data.clients, c] };
+    setData(next);
+    saveData(user, next);
   }
 
   if (!user) {
@@ -33,15 +48,13 @@ export default function App() {
 
           <input
             style={s.input}
-            placeholder="Όνομα χρήστη (π.χ. alex)"
+            placeholder="Όνομα χρήστη"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => (e.key === "Enter" ? login() : null)}
           />
 
-          <button style={s.btn} onClick={login}>
-            Login
-          </button>
+          <button style={s.btn} onClick={login}>Login</button>
         </div>
       </div>
     );
@@ -51,13 +64,20 @@ export default function App() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={s.title}>PraxisLog</div>
+
         <div style={s.row}>
-          <div>
-            Συνδεδεμένος ως: <b>{user}</b>
-          </div>
-          <button style={s.btn2} onClick={logout}>
-            Logout
-          </button>
+          <div>Χρήστης: <b>{user}</b></div>
+          <button style={s.btn2} onClick={logout}>Logout</button>
+        </div>
+
+        <div style={s.sep}>
+          <b>Ωφελούμενοι</b>
+          <ul>
+            {data.clients.map((c, i) => (
+              <li key={i}>{c}</li>
+            ))}
+          </ul>
+          <button style={s.btn} onClick={addClient}>+ Προσθήκη</button>
         </div>
       </div>
     </div>
@@ -74,7 +94,7 @@ const s = {
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
   },
   card: {
-    width: 320,
+    width: 360,
     border: "1px solid #e5e5e5",
     borderRadius: 12,
     padding: 16,
@@ -98,6 +118,7 @@ const s = {
     color: "#fff",
     cursor: "pointer",
     fontSize: 14,
+    marginTop: 8,
   },
   btn2: {
     padding: "8px 12px",
@@ -108,4 +129,5 @@ const s = {
     fontSize: 14,
   },
   row: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 },
+  sep: { marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" },
 };
