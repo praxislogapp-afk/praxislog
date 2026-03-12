@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { loadData, saveData } from "./storage";
 
@@ -62,17 +63,27 @@ export default function App() {
       id: Date.now(),
       clientId: activeClient.id,
       date: new Date().toLocaleDateString("el-GR"),
-      notes: noteText
+      notes: noteText,
     };
 
     const next = {
       ...data,
-      sessions: [session, ...data.sessions]
+      sessions: [session, ...data.sessions],
     };
 
     setData(next);
     saveData(user, next);
     setNoteText("");
+  }
+
+  function deleteSession(id) {
+    const next = {
+      ...data,
+      sessions: data.sessions.filter((s) => s.id !== id),
+    };
+
+    setData(next);
+    saveData(user, next);
   }
 
   if (!user) {
@@ -138,6 +149,13 @@ export default function App() {
               <div key={sess.id} style={s.session}>
                 <b>{sess.date}</b>
                 <div>{sess.notes}</div>
+
+                <button
+                  style={s.deleteBtn}
+                  onClick={() => deleteSession(sess.id)}
+                >
+                  Διαγραφή
+                </button>
               </div>
             ))}
           </div>
@@ -192,66 +210,74 @@ const s = {
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    fontFamily: "system-ui"
+    fontFamily: "system-ui",
   },
 
   card: {
     width: 360,
     border: "1px solid #ddd",
     borderRadius: 12,
-    padding: 16
+    padding: 16,
   },
 
   cardLarge: {
     width: 600,
     border: "1px solid #ddd",
     borderRadius: 12,
-    padding: 20
+    padding: 20,
   },
 
   title: {
     fontSize: 22,
     fontWeight: 700,
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   input: {
     width: "100%",
     padding: 10,
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   textarea: {
     width: "100%",
     minHeight: 120,
     padding: 10,
-    marginTop: 10
+    marginTop: 10,
   },
 
   btn: {
     marginTop: 10,
     padding: 10,
-    width: "100%"
+    width: "100%",
   },
 
   btn2: {
-    padding: 8
+    padding: 8,
+  },
+
+  deleteBtn: {
+    marginTop: 8,
+    padding: 6,
+    background: "#ffdddd",
+    border: "none",
+    cursor: "pointer",
   },
 
   row: {
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   sep: {
-    marginTop: 10
+    marginTop: 10,
   },
 
   session: {
     border: "1px solid #eee",
     padding: 10,
     marginBottom: 10,
-    borderRadius: 8
-  }
+    borderRadius: 8,
+  },
 };
