@@ -8,6 +8,7 @@ export default function App() {
   const [name, setName] = useState("");
   const [data, setData] = useState({ clients: [], sessions: [] });
   const [activeClient, setActiveClient] = useState(null);
+  const [noteText, setNoteText] = useState("");
 
   useEffect(() => {
     const u = localStorage.getItem(USER_KEY);
@@ -54,6 +55,26 @@ export default function App() {
     saveData(user, next);
   }
 
+  function addSession() {
+    if (!noteText.trim()) return;
+
+    const session = {
+      id: Date.now(),
+      clientId: activeClient.id,
+      date: new Date().toLocaleDateString("el-GR"),
+      notes: noteText
+    };
+
+    const next = {
+      ...data,
+      sessions: [session, ...data.sessions]
+    };
+
+    setData(next);
+    saveData(user, next);
+    setNoteText("");
+  }
+
   if (!user) {
     return (
       <div style={s.page}>
@@ -76,9 +97,13 @@ export default function App() {
   }
 
   if (activeClient) {
+    const clientSessions = data.sessions.filter(
+      (s) => s.clientId === activeClient.id
+    );
+
     return (
       <div style={s.page}>
-        <div style={s.card}>
+        <div style={s.cardLarge}>
           <button style={s.btn2} onClick={() => setActiveClient(null)}>
             ← Πίσω
           </button>
@@ -92,6 +117,30 @@ export default function App() {
               Παρατηρήσεις: {activeClient.notes}
             </div>
           )}
+
+          <hr style={{ margin: "20px 0" }} />
+
+          <h3>Συνεδρίες</h3>
+
+          <textarea
+            style={s.textarea}
+            placeholder="Σημειώσεις συνεδρίας..."
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+          />
+
+          <button style={s.btn} onClick={addSession}>
+            Καταχώρηση συνεδρίας
+          </button>
+
+          <div style={{ marginTop: 20 }}>
+            {clientSessions.map((sess) => (
+              <div key={sess.id} style={s.session}>
+                <b>{sess.date}</b>
+                <div>{sess.notes}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -123,7 +172,6 @@ export default function App() {
               >
                 <b>{c.fullname}</b>
                 <div>Ημερομηνία: {c.createdAt}</div>
-                {c.notes && <div style={{ opacity: 0.7 }}>{c.notes}</div>}
               </li>
             ))}
           </ul>
@@ -141,41 +189,69 @@ const s = {
   page: {
     minHeight: "100vh",
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    padding: 16,
-    fontFamily: "system-ui",
+    alignItems: "center",
+    padding: 20,
+    fontFamily: "system-ui"
   },
+
   card: {
     width: 360,
-    border: "1px solid #e5e5e5",
+    border: "1px solid #ddd",
     borderRadius: 12,
-    padding: 16,
+    padding: 16
   },
+
+  cardLarge: {
+    width: 600,
+    border: "1px solid #ddd",
+    borderRadius: 12,
+    padding: 20
+  },
+
   title: {
     fontSize: 22,
     fontWeight: 700,
-    marginBottom: 10,
+    marginBottom: 10
   },
+
   input: {
     width: "100%",
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 10
   },
-  btn: {
+
+  textarea: {
     width: "100%",
+    minHeight: 120,
     padding: 10,
+    marginTop: 10
   },
+
+  btn: {
+    marginTop: 10,
+    padding: 10,
+    width: "100%"
+  },
+
   btn2: {
-    padding: 8,
-    marginBottom: 10,
+    padding: 8
   },
+
   row: {
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 10
   },
+
   sep: {
-    marginTop: 10,
+    marginTop: 10
   },
+
+  session: {
+    border: "1px solid #eee",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8
+  }
 };
