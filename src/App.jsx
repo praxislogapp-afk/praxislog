@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { loadData, saveData } from "./storage";
 
@@ -86,6 +85,21 @@ export default function App() {
     saveData(user, next);
   }
 
+  function editSession(session) {
+    const updated = prompt("Επεξεργασία σημειώσεων", session.notes);
+    if (updated === null) return;
+
+    const next = {
+      ...data,
+      sessions: data.sessions.map((s) =>
+        s.id === session.id ? { ...s, notes: updated } : s
+      ),
+    };
+
+    setData(next);
+    saveData(user, next);
+  }
+
   if (!user) {
     return (
       <div style={s.page}>
@@ -149,6 +163,13 @@ export default function App() {
               <div key={sess.id} style={s.session}>
                 <b>{sess.date}</b>
                 <div>{sess.notes}</div>
+
+                <button
+                  style={s.editBtn}
+                  onClick={() => editSession(sess)}
+                >
+                  Επεξεργασία
+                </button>
 
                 <button
                   style={s.deleteBtn}
@@ -254,6 +275,15 @@ const s = {
 
   btn2: {
     padding: 8,
+  },
+
+  editBtn: {
+    marginTop: 8,
+    marginRight: 8,
+    padding: 6,
+    background: "#e6f0ff",
+    border: "none",
+    cursor: "pointer",
   },
 
   deleteBtn: {
