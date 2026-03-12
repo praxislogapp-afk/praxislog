@@ -41,6 +41,7 @@ export default function App() {
       id: Date.now(),
       fullname,
       notes,
+      createdAt: new Date().toLocaleDateString("el-GR"),
     };
 
     const next = {
@@ -57,14 +58,12 @@ export default function App() {
       <div style={s.page}>
         <div style={s.card}>
           <div style={s.title}>PraxisLog</div>
-          <div style={s.sub}>Σύνδεση (προσωρινή)</div>
 
           <input
             style={s.input}
             placeholder="Όνομα χρήστη"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => (e.key === "Enter" ? login() : null)}
           />
 
           <button style={s.btn} onClick={login}>
@@ -91,14 +90,17 @@ export default function App() {
 
         <div style={s.sep}>
           <b>Ωφελούμενοι</b>
+
           <ul>
             {data.clients.map((c) => (
               <li key={c.id}>
                 <b>{c.fullname}</b>
+                <div>Ημερομηνία: {c.createdAt}</div>
                 {c.notes && <div style={{ opacity: 0.7 }}>{c.notes}</div>}
               </li>
             ))}
           </ul>
+
           <button style={s.btn} onClick={addClient}>
             + Προσθήκη
           </button>
@@ -115,7 +117,7 @@ const s = {
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
+    fontFamily: "system-ui",
   },
   card: {
     width: 360,
@@ -123,40 +125,29 @@ const s = {
     borderRadius: 12,
     padding: 16,
   },
-  title: { fontSize: 22, fontWeight: 700, marginBottom: 6 },
-  sub: { opacity: 0.75, marginBottom: 12 },
+  title: {
+    fontSize: 22,
+    fontWeight: 700,
+    marginBottom: 10,
+  },
   input: {
     width: "100%",
-    padding: "10px 12px",
-    borderRadius: 10,
-    border: "1px solid #d9d9d9",
-    fontSize: 14,
+    padding: 10,
     marginBottom: 10,
   },
   btn: {
     width: "100%",
-    padding: "10px 12px",
-    borderRadius: 10,
-    border: "1px solid #111",
-    background: "#111",
-    color: "#fff",
-    cursor: "pointer",
-    fontSize: 14,
-    marginTop: 8,
+    padding: 10,
   },
   btn2: {
-    padding: "8px 12px",
-    borderRadius: 10,
-    border: "1px solid #d9d9d9",
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: 14,
+    padding: 8,
   },
   row: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 6,
+    marginBottom: 10,
   },
-  sep: { marginTop: 14, paddingTop: 12, borderTop: "1px solid #eee" },
+  sep: {
+    marginTop: 10,
+  },
 };
