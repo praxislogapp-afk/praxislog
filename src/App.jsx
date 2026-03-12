@@ -6,6 +6,7 @@ const USER_KEY = "praxislog_user";
 export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
+  const [search, setSearch] = useState("");
   const [data, setData] = useState({ clients: [], sessions: [] });
   const [activeClient, setActiveClient] = useState(null);
   const [noteText, setNoteText] = useState("");
@@ -185,6 +186,10 @@ export default function App() {
     );
   }
 
+  const filteredClients = data.clients.filter((c) =>
+    c.fullname.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div style={s.page}>
       <div style={s.card}>
@@ -199,11 +204,18 @@ export default function App() {
           </button>
         </div>
 
+        <input
+          style={s.input}
+          placeholder="Αναζήτηση ωφελούμενου..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
         <div style={s.sep}>
           <b>Ωφελούμενοι</b>
 
           <ul>
-            {data.clients.map((c) => (
+            {filteredClients.map((c) => (
               <li
                 key={c.id}
                 style={{ cursor: "pointer", marginBottom: 10 }}
