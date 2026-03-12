@@ -7,6 +7,7 @@ export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
   const [data, setData] = useState({ clients: [], sessions: [] });
+  const [activeClient, setActiveClient] = useState(null);
 
   useEffect(() => {
     const u = localStorage.getItem(USER_KEY);
@@ -74,6 +75,28 @@ export default function App() {
     );
   }
 
+  if (activeClient) {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <button style={s.btn2} onClick={() => setActiveClient(null)}>
+            ← Πίσω
+          </button>
+
+          <h2>{activeClient.fullname}</h2>
+
+          <div>Ημερομηνία δημιουργίας: {activeClient.createdAt}</div>
+
+          {activeClient.notes && (
+            <div style={{ marginTop: 10 }}>
+              Παρατηρήσεις: {activeClient.notes}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={s.page}>
       <div style={s.card}>
@@ -93,7 +116,11 @@ export default function App() {
 
           <ul>
             {data.clients.map((c) => (
-              <li key={c.id}>
+              <li
+                key={c.id}
+                style={{ cursor: "pointer", marginBottom: 10 }}
+                onClick={() => setActiveClient(c)}
+              >
                 <b>{c.fullname}</b>
                 <div>Ημερομηνία: {c.createdAt}</div>
                 {c.notes && <div style={{ opacity: 0.7 }}>{c.notes}</div>}
@@ -141,6 +168,7 @@ const s = {
   },
   btn2: {
     padding: 8,
+    marginBottom: 10,
   },
   row: {
     display: "flex",
