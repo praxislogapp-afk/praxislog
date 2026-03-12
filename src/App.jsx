@@ -1,325 +1,187 @@
-import { useEffect, useState } from "react";
-import { loadData, saveData } from "./storage";
+import { useState, useEffect } from "react";
 
 const USER_KEY = "praxislog_user";
+
+function loadUserData(user) {
+  const data = localStorage.getItem("praxislog_data_" + user);
+  if (!data) return { clients: [] };
+  return JSON.parse(data);
+}
+
+function saveUserData(user, data) {
+  localStorage.setItem("praxislog_data_" + user, JSON.stringify(data));
+}
 
 export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
   const [search, setSearch] = useState("");
-  const [data, setData] = useState({ clients: [], sessions: [] });
+  const [data, setData] = useState({ clients: [] });
   const [activeClient, setActiveClient] = useState(null);
-  const [noteText, setNoteText] = useState("");
+  const [sessionText, setSessionText] = useState("");
 
   useEffect(() => {
-    const u = localStorage.getItem(USER_KEY);
-    if (u) {
-      setUser(u);
-      setData(loadData(u));
-    }
+    const stored = localStorage.getItem(USER_KEY);
+    if (stored) setUser(stored);
   }, []);
 
-  function login() {
-    const v = name.trim();
-    if (!v) return;
-    localStorage.setItem(USER_KEY, v);
-    setUser(v);
-    setData(loadData(v));
-    setName("");
-  }
+  useEffect(() => {
+    if (user) {
+      const d = loadUserData(user);
+      setData(d);
+    }
+  }, [user]);
 
-  function logout() {
-    localStorage.removeItem(USER_KEY);
-    setUser("");
-    setData({ clients: [], sessions: [] });
-  }
-
-  function addClient() {
-    const fullname = prompt("Ονοματεπώνυμο ωφελούμενου");
-    if (!fullname) return;
-
-    const notes = prompt("Παρατηρήσεις (προαιρετικά)") || "";
-
-    const client = {
-      id: Date.now(),
-      fullname,
-      notes,
-      createdAt: new Date().toLocaleDateString("el-GR"),
-    };
-
-    const next = {
-      ...data,
-      clients: [...data.clients, client],
-    };
-
-    setData(next);
-    saveData(user, next);
-  }
-
-  function addSession() {
-    if (!noteText.trim()) return;
-
-    const session = {
-      id: Date.now(),
-      clientId: activeClient.id,
-      date: new Date().toLocaleDateString("el-GR"),
-      notes: noteText,
-    };
-
-    const next = {
-      ...data,
-      sessions: [session, ...data.sessions],
-    };
-
-    setData(next);
-    saveData(user, next);
-    setNoteText("");
-  }
-
-  function deleteSession(id) {
-    const next = {
-      ...data,
-      sessions: data.sessions.filter((s) => s.id !== id),
-    };
-
-    setData(next);
-    saveData(user, next);
-  }
-
-  function editSession(session) {
-    const updated = prompt("Επεξεργασία σημειώσεων", session.notes);
-    if (updated === null) return;
-
-    const next = {
-      ...data,
-      sessions: data.sessions.map((s) =>
-        s.id === session.id ? { ...s, notes: updated } : s
-      ),
-    };
-
-    setData(next);
-    saveData(user, next);
-  }
+  useEffect(() => {
+    if (user) {
+      saveUserData(user, data);
+    }
+  }, [data, user]);
 
   if (!user) {
     return (
-      <div style={s.page}>
-        <div style={s.card}>
-          <div style={s.title}>PraxisLog</div>
-
-          <input
-            style={s.input}
-            placeholder="Όνομα χρήστη"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-
-          <button style={s.btn} onClick={login}>
-            Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeClient) {
-    const clientSessions = data.sessions.filter(
-      (s) => s.clientId === activeClient.id
-    );
-
-    return (
-      <div style={s.page}>
-        <div style={s.cardLarge}>
-          <button style={s.btn2} onClick={() => setActiveClient(null)}>
-            ← Πίσω
-          </button>
-
-          <h2>{activeClient.fullname}</h2>
-
-          <div>Ημερομηνία δημιουργίας: {activeClient.createdAt}</div>
-
-          {activeClient.notes && (
-            <div style={{ marginTop: 10 }}>
-              Παρατηρήσεις: {activeClient.notes}
-            </div>
-          )}
-
-          <hr style={{ margin: "20px 0" }} />
-
-          <h3>Συνεδρίες</h3>
-
-          <textarea
-            style={s.textarea}
-            placeholder="Σημειώσεις συνεδρίας..."
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-          />
-
-          <button style={s.btn} onClick={addSession}>
-            Καταχώρηση συνεδρίας
-          </button>
-
-          <div style={{ marginTop: 20 }}>
-            {clientSessions.map((sess) => (
-              <div key={sess.id} style={s.session}>
-                <b>{sess.date}</b>
-                <div>{sess.notes}</div>
-
-                <button
-                  style={s.editBtn}
-                  onClick={() => editSession(sess)}
-                >
-                  Επεξεργασία
-                </button>
-
-                <button
-                  style={s.deleteBtn}
-                  onClick={() => deleteSession(sess.id)}
-                >
-                  Διαγραφή
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div style={{ padding: 40 }}>
+        <h1>PraxisLog</h1>
+        <input
+          placeholder="Όνομα χρήστη"
+          onChange={(e) => setName(e.target.value)}
+        />
+        <br />
+        <button
+          onClick={() => {
+            localStorage.setItem(USER_KEY, name);
+            setUser(name);
+          }}
+        >
+          Login
+        </button>
       </div>
     );
   }
 
   const filteredClients = data.clients.filter((c) =>
-    c.fullname.toLowerCase().includes(search.toLowerCase())
+    (c.fullname || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <div style={s.title}>PraxisLog</div>
+    <div style={{ padding: 40 }}>
+      <h1>PraxisLog</h1>
 
-        <div style={s.row}>
-          <div>
-            Χρήστης: <b>{user}</b>
-          </div>
-          <button style={s.btn2} onClick={logout}>
-            Logout
-          </button>
-        </div>
+      <div>
+        Χρήστης: <b>{user}</b>{" "}
+        <button
+          onClick={() => {
+            localStorage.removeItem(USER_KEY);
+            setUser("");
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
-        <input
-          style={s.input}
-          placeholder="Αναζήτηση ωφελούμενου..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <hr />
 
-        <div style={s.sep}>
-          <b>Ωφελούμενοι</b>
+      {!activeClient && (
+        <>
+          <h2>Ωφελούμενοι</h2>
+
+          <input
+            placeholder="Αναζήτηση"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
           <ul>
-            {filteredClients.map((c) => (
+            {filteredClients.map((c, i) => (
               <li
-                key={c.id}
-                style={{ cursor: "pointer", marginBottom: 10 }}
-                onClick={() => setActiveClient(c)}
+                key={i}
+                style={{ cursor: "pointer" }}
+                onClick={() => setActiveClient(i)}
               >
                 <b>{c.fullname}</b>
-                <div>Ημερομηνία: {c.createdAt}</div>
+                <br />
+                {c.notes}
               </li>
             ))}
           </ul>
 
-          <button style={s.btn} onClick={addClient}>
+          <button
+            onClick={() => {
+              const fullname = prompt("Ονοματεπώνυμο ωφελούμενου");
+              if (!fullname) return;
+
+              const notes = prompt("Παρατηρήσεις (προαιρετικά)");
+
+              const newClients = [
+                ...data.clients,
+                { fullname, notes, sessions: [] },
+              ];
+
+              setData({ ...data, clients: newClients });
+            }}
+          >
             + Προσθήκη
           </button>
-        </div>
-      </div>
+        </>
+      )}
+
+      {activeClient !== null && (
+        <>
+          <button onClick={() => setActiveClient(null)}>← Πίσω</button>
+
+          <h2>{data.clients[activeClient].fullname}</h2>
+
+          <h3>Νέα συνεδρία</h3>
+
+          <input
+            type="date"
+            id="sessionDate"
+          />
+
+          <br />
+
+          <textarea
+            rows="6"
+            style={{ width: "100%" }}
+            placeholder="Σημειώσεις συνεδρίας"
+            value={sessionText}
+            onChange={(e) => setSessionText(e.target.value)}
+          />
+
+          <br />
+
+          <button
+            onClick={() => {
+              const date = document.getElementById("sessionDate").value;
+
+              const clients = [...data.clients];
+
+              clients[activeClient].sessions.push({
+                date,
+                text: sessionText,
+              });
+
+              setSessionText("");
+
+              setData({ ...data, clients });
+            }}
+          >
+            Αποθήκευση συνεδρίας
+          </button>
+
+          <h3>Ιστορικό</h3>
+
+          <ul>
+            {data.clients[activeClient].sessions.map((s, i) => (
+              <li key={i}>
+                <b>{s.date}</b>
+                <br />
+                {s.text}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
-
-const s = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    fontFamily: "system-ui",
-  },
-
-  card: {
-    width: 360,
-    border: "1px solid #ddd",
-    borderRadius: 12,
-    padding: 16,
-  },
-
-  cardLarge: {
-    width: 600,
-    border: "1px solid #ddd",
-    borderRadius: 12,
-    padding: 20,
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: 700,
-    marginBottom: 10,
-  },
-
-  input: {
-    width: "100%",
-    padding: 10,
-    marginBottom: 10,
-  },
-
-  textarea: {
-    width: "100%",
-    minHeight: 120,
-    padding: 10,
-    marginTop: 10,
-  },
-
-  btn: {
-    marginTop: 10,
-    padding: 10,
-    width: "100%",
-  },
-
-  btn2: {
-    padding: 8,
-  },
-
-  editBtn: {
-    marginTop: 8,
-    marginRight: 8,
-    padding: 6,
-    background: "#e6f0ff",
-    border: "none",
-    cursor: "pointer",
-  },
-
-  deleteBtn: {
-    marginTop: 8,
-    padding: 6,
-    background: "#ffdddd",
-    border: "none",
-    cursor: "pointer",
-  },
-
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-
-  sep: {
-    marginTop: 10,
-  },
-
-  session: {
-    border: "1px solid #eee",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
-  },
-};
