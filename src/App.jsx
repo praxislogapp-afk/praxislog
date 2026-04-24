@@ -40,22 +40,21 @@ export default function App() {
 
   if (!user) {
     return (
-      <div style={{ padding: 40, fontFamily: "system-ui" }}>
+      <div className="app">
         <h1>PraxisLog</h1>
         <input
           placeholder="Όνομα χρήστη"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{ width: "100%", maxWidth: 320, padding: 10, marginBottom: 10 }}
+          className="input"
         />
-        <br />
         <button
           onClick={() => {
             if (!name.trim()) return;
             localStorage.setItem(USER_KEY, name);
             setUser(name);
           }}
-          style={{ padding: 10, minWidth: 160 }}
+          className="button"
         >
           Login
         </button>
@@ -68,10 +67,107 @@ export default function App() {
   );
 
   return (
-    <div style={{ padding: 40, fontFamily: "system-ui" }}>
-      <h1>PraxisLog</h1>
+    <div className="app">
+      <style>{`
+        .app {
+          padding: 40px;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          color: #111;
+        }
 
-      <div style={{ marginBottom: 20 }}>
+        .input, textarea {
+          width: 100%;
+          max-width: 620px;
+          padding: 10px;
+          margin-bottom: 12px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          font-size: 15px;
+        }
+
+        textarea {
+          min-height: 140px;
+        }
+
+        .button {
+          padding: 10px 14px;
+          border: 1px solid #111;
+          background: #111;
+          color: white;
+          border-radius: 6px;
+          cursor: pointer;
+          margin-right: 8px;
+          margin-top: 8px;
+        }
+
+        .button-light {
+          padding: 8px 12px;
+          border: 1px solid #ccc;
+          background: white;
+          border-radius: 6px;
+          cursor: pointer;
+          margin-right: 8px;
+          margin-top: 8px;
+        }
+
+        .client-item {
+          cursor: pointer;
+          margin-bottom: 14px;
+          padding: 10px;
+          border-bottom: 1px solid #eee;
+        }
+
+        .print-box {
+          max-width: 800px;
+          background: white;
+        }
+
+        .session-box {
+          border: 1px solid #ddd;
+          padding: 12px;
+          margin-bottom: 12px;
+          border-radius: 8px;
+        }
+
+        @media print {
+          body {
+            background: white;
+          }
+
+          .no-print {
+            display: none !important;
+          }
+
+          .app {
+            padding: 0;
+            font-size: 12pt;
+          }
+
+          .print-box {
+            max-width: none;
+            width: 100%;
+          }
+
+          .print-title {
+            text-align: center;
+            font-size: 18pt;
+            margin-bottom: 20px;
+          }
+
+          .session-box {
+            border: 1px solid #999;
+            page-break-inside: avoid;
+          }
+
+          textarea, input, button {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <h1 className="no-print">PraxisLog</h1>
+
+      <div className="no-print" style={{ marginBottom: 20 }}>
         Χρήστης: <b>{user}</b>{" "}
         <button
           onClick={() => {
@@ -79,30 +175,30 @@ export default function App() {
             setUser("");
             setActiveClient(null);
           }}
-          style={{ marginLeft: 10 }}
+          className="button-light"
         >
           Logout
         </button>
       </div>
 
-      <hr />
+      <hr className="no-print" />
 
       {activeClient === null && (
-        <>
+        <div className="no-print">
           <h2>Ωφελούμενοι</h2>
 
           <input
             placeholder="Αναζήτηση ωφελούμενου..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", maxWidth: 420, padding: 10, marginBottom: 15 }}
+            className="input"
           />
 
-          <ul style={{ paddingLeft: 20 }}>
+          <ul style={{ paddingLeft: 0, listStyle: "none" }}>
             {filteredClients.map((c, i) => (
               <li
                 key={i}
-                style={{ cursor: "pointer", marginBottom: 14 }}
+                className="client-item"
                 onClick={() => setActiveClient(i)}
               >
                 <b>{c.fullname}</b>
@@ -132,120 +228,123 @@ export default function App() {
 
               setData({ ...data, clients: newClients });
             }}
-            style={{ padding: 10, minWidth: 180 }}
+            className="button"
           >
             + Προσθήκη
           </button>
-        </>
+        </div>
       )}
 
       {activeClient !== null && data.clients[activeClient] && (
         <>
-          <button onClick={() => setActiveClient(null)} style={{ marginBottom: 16 }}>
-            ← Πίσω
-          </button>
+          <div className="no-print">
+            <button onClick={() => setActiveClient(null)} className="button-light">
+              ← Πίσω
+            </button>
+          </div>
 
-          <div id="print-area">
+          <div className="print-box">
+            <h2 className="print-title">Φάκελος Ωφελούμενου</h2>
+
             <h2>{data.clients[activeClient].fullname}</h2>
 
             {data.clients[activeClient].createdAt && (
-              <div>Ημερομηνία δημιουργίας: {data.clients[activeClient].createdAt}</div>
+              <div>
+                <b>Ημερομηνία δημιουργίας:</b>{" "}
+                {data.clients[activeClient].createdAt}
+              </div>
             )}
 
             {data.clients[activeClient].notes && (
               <div style={{ marginTop: 10 }}>
-                Παρατηρήσεις: {data.clients[activeClient].notes}
+                <b>Παρατηρήσεις:</b> {data.clients[activeClient].notes}
               </div>
             )}
 
             <hr style={{ margin: "20px 0" }} />
 
-            <h3>Νέα συνεδρία</h3>
+            <div className="no-print">
+              <h3>Νέα συνεδρία</h3>
 
-            <input type="date" id="sessionDate" style={{ padding: 8, marginBottom: 10 }} />
+              <input type="date" id="sessionDate" className="input" />
 
-            <br />
+              <textarea
+                placeholder="Σημειώσεις συνεδρίας"
+                value={sessionText}
+                onChange={(e) => setSessionText(e.target.value)}
+              />
 
-            <textarea
-              rows="6"
-              style={{ width: "100%", padding: 10, marginBottom: 10 }}
-              placeholder="Σημειώσεις συνεδρίας"
-              value={sessionText}
-              onChange={(e) => setSessionText(e.target.value)}
-            />
+              <button
+                onClick={() => {
+                  const date = document.getElementById("sessionDate").value;
+                  if (!sessionText.trim()) return;
 
-            <br />
+                  const clients = [...data.clients];
+                  const currentSessions = clients[activeClient].sessions || [];
 
-            <button
-              onClick={() => {
-                const date = document.getElementById("sessionDate").value;
-                if (!sessionText.trim()) return;
+                  clients[activeClient].sessions = [
+                    {
+                      date: date || new Date().toLocaleDateString("el-GR"),
+                      text: sessionText,
+                    },
+                    ...currentSessions,
+                  ];
 
-                const clients = [...data.clients];
-                const currentSessions = clients[activeClient].sessions || [];
+                  setSessionText("");
+                  setData({ ...data, clients });
+                }}
+                className="button"
+              >
+                Αποθήκευση συνεδρίας
+              </button>
+            </div>
 
-                clients[activeClient].sessions = [
-                  {
-                    date: date || new Date().toLocaleDateString("el-GR"),
-                    text: sessionText,
-                  },
-                  ...currentSessions,
-                ];
+            <h3 style={{ marginTop: 24 }}>Ιστορικό Συνεδριών</h3>
 
-                setSessionText("");
-                setData({ ...data, clients });
-              }}
-              style={{ padding: 10, minWidth: 200 }}
-            >
-              Αποθήκευση συνεδρίας
-            </button>
+            {(data.clients[activeClient].sessions || []).map((s, i) => (
+              <div key={i} className="session-box">
+                <b>{s.date}</b>
+                <div style={{ whiteSpace: "pre-wrap", marginTop: 6 }}>{s.text}</div>
 
-            <h3 style={{ marginTop: 24 }}>Ιστορικό</h3>
+                <div className="no-print" style={{ marginTop: 8 }}>
+                  <button
+                    onClick={() => {
+                      const updated = prompt("Επεξεργασία σημειώσεων", s.text);
+                      if (updated === null) return;
 
-            <ul style={{ paddingLeft: 20 }}>
-              {(data.clients[activeClient].sessions || []).map((s, i) => (
-                <li key={i} style={{ marginBottom: 16 }}>
-                  <b>{s.date}</b>
-                  <br />
-                  <div style={{ whiteSpace: "pre-wrap" }}>{s.text}</div>
-                  <div style={{ marginTop: 8 }}>
-                    <button
-                      onClick={() => {
-                        const updated = prompt("Επεξεργασία σημειώσεων", s.text);
-                        if (updated === null) return;
+                      const clients = [...data.clients];
+                      clients[activeClient].sessions[i].text = updated;
+                      setData({ ...data, clients });
+                    }}
+                    className="button-light"
+                  >
+                    Επεξεργασία
+                  </button>
 
-                        const clients = [...data.clients];
-                        clients[activeClient].sessions[i].text = updated;
-                        setData({ ...data, clients });
-                      }}
-                      style={{ marginRight: 8 }}
-                    >
-                      Επεξεργασία
-                    </button>
+                  <button
+                    onClick={() => {
+                      const yes = confirm("Να διαγραφεί η συνεδρία;");
+                      if (!yes) return;
 
-                    <button
-                      onClick={() => {
-                        const yes = confirm("Να διαγραφεί η συνεδρία;");
-                        if (!yes) return;
-
-                        const clients = [...data.clients];
-                        clients[activeClient].sessions.splice(i, 1);
-                        setData({ ...data, clients });
-                      }}
-                    >
-                      Διαγραφή
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      const clients = [...data.clients];
+                      clients[activeClient].sessions.splice(i, 1);
+                      setData({ ...data, clients });
+                    }}
+                    className="button-light"
+                  >
+                    Διαγραφή
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
 
           <button
             onClick={() => window.print()}
-            style={{ marginTop: 20, padding: 10, minWidth: 180 }}
+            className="button no-print"
+            style={{ marginTop: 20 }}
           >
-            Εκτύπωση φακέλου
+            Εκτύπωση / PDF
           </button>
         </>
       )}
