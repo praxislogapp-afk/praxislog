@@ -15,6 +15,7 @@ function saveUserData(user, data) {
 export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
+  const [search, setSearch] = useState("");
   const [data, setData] = useState({ clients: [] });
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [sessionDate, setSessionDate] = useState("");
@@ -23,6 +24,7 @@ export default function App() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem(USER_KEY);
+
     if (savedUser) {
       setUser(savedUser);
       setData(loadUserData(savedUser));
@@ -42,24 +44,33 @@ export default function App() {
       sessions: [],
     };
 
-    setData({ clients: [...data.clients, newClient] });
+    setData({
+      clients: [...data.clients, newClient],
+    });
+
     setName("");
   };
 
-  const selectedClient = data.clients.find(c => c.id === selectedClientId);
+  const selectedClient = data.clients.find(
+    (c) => c.id === selectedClientId
+  );
 
   const saveSession = () => {
     if (!sessionDate || !sessionNotes.trim()) return;
 
-    const updatedClients = data.clients.map(c => {
+    const updatedClients = data.clients.map((c) => {
       if (c.id !== selectedClientId) return c;
 
       if (editingSessionId) {
         return {
           ...c,
-          sessions: c.sessions.map(s =>
+          sessions: c.sessions.map((s) =>
             s.id === editingSessionId
-              ? { ...s, date: sessionDate, notes: sessionNotes.trim() }
+              ? {
+                  ...s,
+                  date: sessionDate,
+                  notes: sessionNotes.trim(),
+                }
               : s
           ),
         };
@@ -79,16 +90,23 @@ export default function App() {
     });
 
     setData({ clients: updatedClients });
+
     setSessionDate("");
     setSessionNotes("");
     setEditingSessionId(null);
   };
 
   const deleteClient = () => {
-    const ok = window.confirm("Θέλεις σίγουρα να διαγράψεις τον ωφελούμενο;");
+    const ok = window.confirm(
+      "Θέλεις σίγουρα να διαγράψεις τον ωφελούμενο;"
+    );
+
     if (!ok) return;
 
-    const updated = data.clients.filter(c => c.id !== selectedClientId);
+    const updated = data.clients.filter(
+      (c) => c.id !== selectedClientId
+    );
+
     setData({ clients: updated });
     setSelectedClientId(null);
   };
@@ -100,15 +118,18 @@ export default function App() {
   };
 
   const deleteSession = (sessionId) => {
-    const ok = window.confirm("Θέλεις σίγουρα να διαγράψεις τη συνεδρία;");
+    const ok = window.confirm(
+      "Θέλεις σίγουρα να διαγράψεις τη συνεδρία;"
+    );
+
     if (!ok) return;
 
-    const updatedClients = data.clients.map(c => {
+    const updatedClients = data.clients.map((c) => {
       if (c.id !== selectedClientId) return c;
 
       return {
         ...c,
-        sessions: c.sessions.filter(s => s.id !== sessionId),
+        sessions: c.sessions.filter((s) => s.id !== sessionId),
       };
     });
 
@@ -121,11 +142,9 @@ export default function App() {
     }
   };
 
-  const cancelEdit = () => {
-    setSessionDate("");
-    setSessionNotes("");
-    setEditingSessionId(null);
-  };
+  const filteredClients = data.clients.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (!user) {
     return (
@@ -141,7 +160,9 @@ export default function App() {
         <button
           onClick={() => {
             if (!name.trim()) return;
+
             localStorage.setItem(USER_KEY, name.trim());
+
             setUser(name.trim());
             setData(loadUserData(name.trim()));
             setName("");
@@ -185,7 +206,10 @@ export default function App() {
           `}
         </style>
 
-        <button className="no-print" onClick={() => setSelectedClientId(null)}>
+        <button
+          className="no-print"
+          onClick={() => setSelectedClientId(null)}
+        >
           ← Πίσω
         </button>
 
@@ -211,7 +235,11 @@ export default function App() {
               Διαγραφή ωφελούμενου
             </button>
 
-            <h4>{editingSessionId ? "Επεξεργασία συνεδρίας" : "Νέα συνεδρία"}</h4>
+            <h4>
+              {editingSessionId
+                ? "Επεξεργασία συνεδρίας"
+                : "Νέα συνεδρία"}
+            </h4>
 
             <input
               type="date"
@@ -219,7 +247,8 @@ export default function App() {
               onChange={(e) => setSessionDate(e.target.value)}
             />
 
-            <br /><br />
+            <br />
+            <br />
 
             <textarea
               placeholder="Σημειώσεις συνεδρίας"
@@ -228,14 +257,24 @@ export default function App() {
               style={{ width: "100%", height: "120px" }}
             />
 
-            <br /><br />
+            <br />
+            <br />
 
             <button onClick={saveSession}>
-              {editingSessionId ? "Αποθήκευση αλλαγών" : "Αποθήκευση συνεδρίας"}
+              {editingSessionId
+                ? "Αποθήκευση αλλαγών"
+                : "Αποθήκευση συνεδρίας"}
             </button>
 
             {editingSessionId && (
-              <button onClick={cancelEdit} style={{ marginLeft: 10 }}>
+              <button
+                onClick={() => {
+                  setEditingSessionId(null);
+                  setSessionDate("");
+                  setSessionNotes("");
+                }}
+                style={{ marginLeft: 10 }}
+              >
                 Ακύρωση
               </button>
             )}
@@ -247,19 +286,26 @@ export default function App() {
             <p>Δεν υπάρχουν καταχωρημένες συνεδρίες.</p>
           )}
 
-          {selectedClient.sessions.map(s => (
+          {selectedClient.sessions.map((s) => (
             <div className="session-card" key={s.id}>
               <strong>{s.date}</strong>
+
               <p>{s.notes}</p>
 
-              <button className="no-print" onClick={() => editSession(s)}>
+              <button
+                className="no-print"
+                onClick={() => editSession(s)}
+              >
                 Επεξεργασία
               </button>
 
               <button
                 className="no-print"
                 onClick={() => deleteSession(s.id)}
-                style={{ marginLeft: 10, color: "#dc2626" }}
+                style={{
+                  marginLeft: 10,
+                  color: "#dc2626",
+                }}
               >
                 Διαγραφή συνεδρίας
               </button>
@@ -267,7 +313,10 @@ export default function App() {
           ))}
         </div>
 
-        <button className="no-print" onClick={() => window.print()}>
+        <button
+          className="no-print"
+          onClick={() => window.print()}
+        >
           Εκτύπωση / PDF
         </button>
       </div>
@@ -279,17 +328,35 @@ export default function App() {
       <h2>Ωφελούμενοι</h2>
 
       <input
+        placeholder="Αναζήτηση ωφελούμενου"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "20px",
+        }}
+      />
+
+      <input
         placeholder="Νέος ωφελούμενος"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
 
-      <button onClick={addClient}>Προσθήκη</button>
+      <button onClick={addClient}>
+        Προσθήκη
+      </button>
 
       <div style={{ marginTop: 20 }}>
-        {data.clients.map(c => (
-          <div key={c.id} style={{ marginBottom: 10 }}>
-            <button onClick={() => setSelectedClientId(c.id)}>
+        {filteredClients.map((c) => (
+          <div
+            key={c.id}
+            style={{ marginBottom: 10 }}
+          >
+            <button
+              onClick={() => setSelectedClientId(c.id)}
+            >
               {c.name}
             </button>
           </div>
