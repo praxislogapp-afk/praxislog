@@ -30,9 +30,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      saveUserData(user, data);
-    }
+    if (user) saveUserData(user, data);
   }, [data, user]);
 
   const addClient = () => {
@@ -99,6 +97,28 @@ export default function App() {
     setSessionDate(session.date);
     setSessionNotes(session.notes);
     setEditingSessionId(session.id);
+  };
+
+  const deleteSession = (sessionId) => {
+    const ok = window.confirm("Θέλεις σίγουρα να διαγράψεις τη συνεδρία;");
+    if (!ok) return;
+
+    const updatedClients = data.clients.map(c => {
+      if (c.id !== selectedClientId) return c;
+
+      return {
+        ...c,
+        sessions: c.sessions.filter(s => s.id !== sessionId),
+      };
+    });
+
+    setData({ clients: updatedClients });
+
+    if (editingSessionId === sessionId) {
+      setSessionDate("");
+      setSessionNotes("");
+      setEditingSessionId(null);
+    }
   };
 
   const cancelEdit = () => {
@@ -234,6 +254,14 @@ export default function App() {
 
               <button className="no-print" onClick={() => editSession(s)}>
                 Επεξεργασία
+              </button>
+
+              <button
+                className="no-print"
+                onClick={() => deleteSession(s.id)}
+                style={{ marginLeft: 10, color: "#dc2626" }}
+              >
+                Διαγραφή συνεδρίας
               </button>
             </div>
           ))}
