@@ -16,8 +16,16 @@ export default function App() {
   const [user, setUser] = useState("");
   const [name, setName] = useState("");
   const [search, setSearch] = useState("");
+
+  const [phone, setPhone] = useState("");
+  const [admissionDate, setAdmissionDate] = useState("");
+  const [treatment, setTreatment] = useState("");
+  const [notes, setNotes] = useState("");
+
   const [data, setData] = useState({ clients: [] });
+
   const [selectedClientId, setSelectedClientId] = useState(null);
+
   const [sessionDate, setSessionDate] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
   const [editingSessionId, setEditingSessionId] = useState(null);
@@ -41,6 +49,10 @@ export default function App() {
     const newClient = {
       id: Date.now(),
       name: name.trim(),
+      phone,
+      admissionDate,
+      treatment,
+      notes,
       sessions: [],
     };
 
@@ -49,6 +61,10 @@ export default function App() {
     });
 
     setName("");
+    setPhone("");
+    setAdmissionDate("");
+    setTreatment("");
+    setNotes("");
   };
 
   const selectedClient = data.clients.find(
@@ -215,7 +231,28 @@ export default function App() {
 
         <div className="print-area">
           <h2>Φάκελος Ωφελούμενου</h2>
+
           <h3>{selectedClient.name}</h3>
+
+          <p>
+            <strong>Τηλέφωνο:</strong>{" "}
+            {selectedClient.phone || "-"}
+          </p>
+
+          <p>
+            <strong>Ημερομηνία εισαγωγής:</strong>{" "}
+            {selectedClient.admissionDate || "-"}
+          </p>
+
+          <p>
+            <strong>Αγωγή:</strong>{" "}
+            {selectedClient.treatment || "-"}
+          </p>
+
+          <p>
+            <strong>Παρατηρήσεις:</strong>{" "}
+            {selectedClient.notes || "-"}
+          </p>
 
           <hr />
 
@@ -339,10 +376,53 @@ export default function App() {
       />
 
       <input
-        placeholder="Νέος ωφελούμενος"
+        placeholder="Ονοματεπώνυμο"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
+
+      <br />
+      <br />
+
+      <input
+        placeholder="Τηλέφωνο"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+      />
+
+      <br />
+      <br />
+
+      <input
+        type="date"
+        value={admissionDate}
+        onChange={(e) => setAdmissionDate(e.target.value)}
+      />
+
+      <br />
+      <br />
+
+      <input
+        placeholder="Αγωγή"
+        value={treatment}
+        onChange={(e) => setTreatment(e.target.value)}
+      />
+
+      <br />
+      <br />
+
+      <textarea
+        placeholder="Παρατηρήσεις"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        style={{
+          width: "100%",
+          height: "100px",
+        }}
+      />
+
+      <br />
+      <br />
 
       <button onClick={addClient}>
         Προσθήκη
